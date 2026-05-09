@@ -1,3 +1,7 @@
+import '../../data/repositories/counter_repository_impl.dart';
+import '../../domain/repositories/counter_repository.dart';
+import '../../presentation/viewmodels/counter_viewmodel.dart';
+
 class ServiceLocator {
   static final ServiceLocator _instance = ServiceLocator._internal();
   
@@ -7,10 +11,16 @@ class ServiceLocator {
   
   ServiceLocator._internal();
 
+  late CounterRepository counterRepository;
+
   // We will register our services, repositories, and viewmodels here.
   void setup() {
-    // Initialization logic will go here
+    // Data/Domain
+    counterRepository = CounterRepositoryImpl();
   }
+
+  // ViewModel factories
+  CounterViewModel get counterViewModel => CounterViewModel(counterRepository);
 }
 
 final locator = ServiceLocator();
