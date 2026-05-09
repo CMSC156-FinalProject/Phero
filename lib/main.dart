@@ -1,7 +1,9 @@
 // main.dart
 import 'package:flutter/material.dart';
+import 'core/di/service_locator.dart';
 
 void main() {
+  locator.setup();
   runApp(const PheroApp());
 }
 
@@ -54,8 +56,8 @@ class _SplashScreenState extends State<SplashScreen> {
   void _navigateToNext() {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const NextScreen(),
-        transitionsBuilder: (_, anim, __, child) =>
+        pageBuilder: (_, _, _) => const NextScreen(),
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 500),
       ),
