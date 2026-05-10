@@ -5,8 +5,21 @@ void main() {
   runApp(const PheroApp());
 }
 
-class PheroApp extends StatelessWidget {
+class PheroApp extends StatefulWidget {
   const PheroApp({super.key});
+
+  @override
+  State<PheroApp> createState() => _PheroAppState();
+}
+
+class _PheroAppState extends State<PheroApp> {
+  bool isDark = false;
+
+  void toggleTheme() {
+    setState(() {
+      isDark = !isDark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +28,8 @@ class PheroApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.light),
       darkTheme: ThemeData(brightness: Brightness.dark),
-      themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      home: SplashScreen(isDark: isDark, onToggle: toggleTheme),
     );
   }
 }
