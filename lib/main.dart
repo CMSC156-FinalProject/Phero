@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'core/di/service_locator.dart';
-import 'presentation/screens/counter_screen.dart';
+import 'presentation/screens/splash_screen.dart';
 
 void main() {
-  locator.setup();
   runApp(const PheroApp());
 }
 
@@ -14,11 +12,11 @@ class PheroApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Phero',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const CounterScreen(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(brightness: Brightness.light),
+      darkTheme: ThemeData(brightness: Brightness.dark),
+      themeMode: ThemeMode.system,
+      home: const SplashScreen(),
     );
   }
 }
