@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'report_screen.dart';
-import '../widgets/theme_toggle.dart';
+import '../../core/di/app_providers.dart';
+import '../../domain/models/report_model.dart';
+import 'package:intl/intl.dart';
 
 class MyReportsScreen extends StatefulWidget {
   final bool isDark;
@@ -16,34 +18,18 @@ class MyReportsScreen extends StatefulWidget {
 class _MyReportsScreenState extends State<MyReportsScreen> {
   String _selectedFilter = 'All';
 
-  final List<String> _filters = ['All', 'Submitted', 'In Progress', 'Resolved'];
+  final List<String> _filters = ['All', 'REPORTED', 'IN PROGRESS', 'RESOLVED'];
 
-  final List<Map<String, dynamic>> _reports = [
-    {
-      'title': 'Pothole',
-      'id': 'REP-1049',
-      'address': 'Main St & 4th Ave',
-      'date': 'Oct 12, 2023',
-      'status': 'RESOLVED',
-      'imagePlaceholder': Colors.brown,
-    },
-    {
-      'title': 'Broken Streetlight',
-      'id': 'REP-1050',
-      'address': 'Parkside Rd',
-      'date': 'Oct 14, 2023',
-      'status': 'IN PROGRESS',
-      'imagePlaceholder': Colors.blueGrey,
-    },
-    {
-      'title': 'Graffiti',
-      'id': 'REP-1051',
-      'address': 'Community Center',
-      'date': 'Today, 9:42 AM',
-      'status': 'SUBMITTED',
-      'imagePlaceholder': Colors.grey,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = AppProviders.of(context).authViewModel;
+      if (auth.currentUser != null) {
+        AppProviders.of(context).reportViewModel.fetchUserReports(auth.currentUser!.id);
+      }
+    });
+  }
 
   Color get _primary => widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
   Color get _bg => widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
@@ -73,17 +59,6 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredReports {
-    if (_selectedFilter == 'All') return _reports;
-    return _reports.where((r) {
-      final status = r['status'] as String;
-      if (_selectedFilter == 'Submitted') return status == 'SUBMITTED';
-      if (_selectedFilter == 'In Progress') return status == 'IN PROGRESS';
-      if (_selectedFilter == 'Resolved') return status == 'RESOLVED';
-      return true;
-    }).toList();
-  }
-
   void _onTabTapped(int index) {
     if (index == 2) return;
     if (index == 0) {
@@ -101,6 +76,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         ),
       );
     }
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('MMM dd, yyyy').format(date);
   }
 
   @override
@@ -150,106 +129,136 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               ),
             ),
 
-            // Title & count
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'My Reports',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: widget.isDark ? const Color(0xFF2ECC71) : _textColor,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${_reports.length} Total',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Track your impact in the community',
-                  style: TextStyle(fontSize: 12, color: _subText),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // Filter chips
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _filters.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = _filters[index];
-                  final isActive = _selectedFilter == filter;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFilter = filter),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isActive ? _primary : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isActive ? _primary : _subText.withOpacity(0.4),
-                          width: 1.5,
+            ListenableBuilder(
+              listenable: AppProviders.of(context).reportViewModel,
+              builder: (context, _) {
+                final reportVM = AppProviders.of(context).reportViewModel;
+                final allUserReports = reportVM.userReports;
+                
+                final filteredReports = _selectedFilter == 'All' 
+                    ? allUserReports 
+                    : allUserReports.where((r) => r.status == _selectedFilter).toList();
+                    
+                return Expanded(
+                  child: Column(
+                    children: [
+                      // Title & count
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'My Reports',
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: widget.isDark ? const Color(0xFF2ECC71) : _textColor,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _primary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${allUserReports.length} Total',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _primary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isActive
-                              ? (widget.isDark ? Colors.black : Colors.white)
-                              : _subText,
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Track your impact in the community',
+                            style: TextStyle(fontSize: 12, color: _subText),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
 
-            const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-            // Report cards
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _filteredReports.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final report = _filteredReports[index];
-                  return _buildReportCard(report);
-                },
-              ),
+                      // Filter chips
+                      SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: _filters.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final filter = _filters[index];
+                            final isActive = _selectedFilter == filter;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedFilter = filter),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isActive ? _primary : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isActive ? _primary : _subText.withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  filter,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isActive
+                                        ? (widget.isDark ? Colors.black : Colors.white)
+                                        : _subText,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Report cards
+                      if (reportVM.isLoading && allUserReports.isEmpty)
+                        const Expanded(child: Center(child: CircularProgressIndicator()))
+                      else if (allUserReports.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              "You haven't reported anything yet.",
+                              style: TextStyle(color: _subText, fontSize: 16),
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: filteredReports.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final report = filteredReports[index];
+                              return _buildReportCard(report);
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }
             ),
           ],
         ),
@@ -258,9 +267,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  Widget _buildReportCard(Map<String, dynamic> report) {
-    final statusColor = _statusColor(report['status']);
-    final statusIcon = _statusIcon(report['status']);
+  Widget _buildReportCard(ReportModel report) {
+    final statusColor = _statusColor(report.status);
+    final statusIcon = _statusIcon(report.status);
 
     return Container(
       decoration: BoxDecoration(
@@ -270,7 +279,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -287,14 +296,14 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             child: Container(
               width: 80,
               height: 85,
-              color: (report['imagePlaceholder'] as Color).withOpacity(
-                widget.isDark ? 0.5 : 0.3,
-              ),
-              child: Icon(
-                Icons.broken_image_outlined,
-                color: Colors.white.withOpacity(0.4),
-                size: 28,
-              ),
+              color: widget.isDark ? const Color(0xFF1E3040) : const Color(0xFFE0E8D8),
+              child: report.imageUrl != null
+                  ? Image.network(report.imageUrl!, fit: BoxFit.cover)
+                  : Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      size: 28,
+                    ),
             ),
           ),
 
@@ -311,7 +320,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        report['title'],
+                        report.title,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -321,7 +330,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: Text(
-                          report['id'],
+                          report.id.substring(0, 8),
                           style: TextStyle(fontSize: 10, color: _subText),
                         ),
                       ),
@@ -329,8 +338,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    report['address'],
+                    report.location,
                     style: TextStyle(fontSize: 12, color: _subText),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -342,7 +353,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                               size: 11, color: _subText),
                           const SizedBox(width: 4),
                           Text(
-                            report['date'],
+                            _formatDate(report.createdAt),
                             style: TextStyle(fontSize: 11, color: _subText),
                           ),
                         ],
@@ -353,10 +364,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.12),
+                            color: statusColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: statusColor.withOpacity(0.3),
+                              color: statusColor.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -366,7 +377,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                               Icon(statusIcon, size: 11, color: statusColor),
                               const SizedBox(width: 4),
                               Text(
-                                report['status'],
+                                report.status,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -393,7 +404,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       decoration: BoxDecoration(
         color: _bg,
         border: Border(
-          top: BorderSide(color: _subText.withOpacity(0.15), width: 1),
+          top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1),
         ),
       ),
       child: SafeArea(

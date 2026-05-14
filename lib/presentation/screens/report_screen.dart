@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
-import '../widgets/theme_toggle.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import '../../core/di/app_providers.dart';
 
 class ReportScreen extends StatefulWidget {
   final bool isDark;
@@ -16,6 +19,7 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  File? _imageFile;
 
   Color get _primary => widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
   Color get _bg => widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
@@ -23,6 +27,21 @@ class _ReportScreenState extends State<ReportScreen> {
   Color get _textColor => widget.isDark ? Colors.white : const Color(0xFF2C3A1E);
   Color get _subText => widget.isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
   Color get _inputBorder => widget.isDark ? const Color(0xFF1E3040) : const Color(0xFFE0E8D8);
+
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _imageFile = File(pickedFile.path));
+    }
+  }
 
   void _onTabTapped(int index) {
     if (index == 1) return;
@@ -137,35 +156,46 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 10),
 
                     // Photo upload area
-                    Container(
-                      width: double.infinity,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: _cardBg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: _inputBorder,
-                          width: 1.5,
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: double.infinity,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: _cardBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _inputBorder,
+                            width: 1.5,
+                          ),
+                          image: _imageFile != null
+                              ? DecorationImage(
+                                  image: FileImage(_imageFile!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 36,
-                            color: _subText.withOpacity(0.7),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Tap to take photo',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _subText,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        child: _imageFile == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_upload_outlined,
+                                    size: 36,
+                                    color: _subText.withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Tap to take photo',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: _subText,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : null,
                       ),
                     ),
 
@@ -180,7 +210,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             : const Color(0xFFEDF4E8),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _primary.withOpacity(0.3),
+                          color: _primary.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -201,7 +231,7 @@ class _ReportScreenState extends State<ReportScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '49.7128° N, 74.0060° W',
+                                '49.7128° N, 74.0060° W', // Geolocation implementation left for future phase
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: _subText,
@@ -234,10 +264,10 @@ class _ReportScreenState extends State<ReportScreen> {
                       child: TextField(
                         controller: _categoryController,
                         style: TextStyle(color: _textColor, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: '',
+                        decoration: const InputDecoration(
+                          hintText: 'e.g. Pothole, Vandalism',
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                         ),
                       ),
@@ -278,27 +308,66 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 24),
 
                     // Submit Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    ListenableBuilder(
+                      listenable: AppProviders.of(context).reportViewModel,
+                      builder: (context, _) {
+                        final reportVM = AppProviders.of(context).reportViewModel;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: reportVM.isLoading
+                                ? null
+                                : () async {
+                                    final auth = AppProviders.of(context).authViewModel;
+                                    
+                                    if (auth.currentUser == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please log in first')));
+                                      return;
+                                    }
+                                    
+                                    if (_categoryController.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Category is required')));
+                                      return;
+                                    }
+                                    
+                                    final success = await reportVM.submitReport(
+                                      id: const Uuid().v4(),
+                                      title: _categoryController.text.trim(),
+                                      category: _categoryController.text.trim(),
+                                      description: _descriptionController.text.trim(),
+                                      location: '49.7128° N, 74.0060° W',
+                                      userId: auth.currentUser!.id,
+                                      imageFile: _imageFile,
+                                    );
+                                    
+                                    if (success && context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted successfully!')));
+                                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MapFeedScreen(isDark: widget.isDark, onToggle: widget.onToggle)));
+                                    } else if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit report')));
+                                    }
+                                  },
+                            child: reportVM.isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                    'Submit Report',
+                                    style: TextStyle(
+                                      color: widget.isDark ? Colors.black : Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
-                          elevation: 0,
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          'Submit Report',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                        );
+                      }
                     ),
 
                     const SizedBox(height: 24),
@@ -318,7 +387,7 @@ class _ReportScreenState extends State<ReportScreen> {
       decoration: BoxDecoration(
         color: _bg,
         border: Border(
-          top: BorderSide(color: _subText.withOpacity(0.15), width: 1),
+          top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1),
         ),
       ),
       child: SafeArea(

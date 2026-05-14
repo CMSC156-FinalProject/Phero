@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
 import 'my_reports_screen.dart';
-import '../widgets/theme_toggle.dart';
+import '../../core/di/app_providers.dart';
+import '../../domain/models/report_model.dart';
 
 class MapFeedScreen extends StatefulWidget {
   final bool isDark;
@@ -15,34 +16,14 @@ class MapFeedScreen extends StatefulWidget {
 
 class _MapFeedScreenState extends State<MapFeedScreen> {
   bool _isListView = true;
-  int _selectedTab = 0;
 
-  final List<Map<String, dynamic>> _issues = [
-    {
-      'title': 'Pothole',
-      'address': '123 Main St',
-      'time': '2h ago',
-      'status': 'REPORTED',
-    },
-    {
-      'title': 'Broken Streetlight',
-      'address': '45 Oak Ave',
-      'time': '5h ago',
-      'status': 'IN PROGRESS',
-    },
-    {
-      'title': 'Vandalism',
-      'address': 'Central Park',
-      'time': '1d ago',
-      'status': 'RESOLVED',
-    },
-    {
-      'title': 'Fallen Tree',
-      'address': '90 Pine Rd',
-      'time': '3h ago',
-      'status': 'REPORTED',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppProviders.of(context).reportViewModel.fetchAllReports();
+    });
+  }
 
   Color _statusColor(String status) {
     switch (status) {
@@ -64,19 +45,32 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
   void _onTabTapped(int index) {
     if (index == 0) return; // already on Map Feed
     if (index == 1) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => ReportScreen(isDark: widget.isDark, onToggle: widget.onToggle),
         ),
       );
     } else if (index == 2) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => MyReportsScreen(isDark: widget.isDark, onToggle: widget.onToggle),
         ),
       );
+    }
+  }
+
+  String _formatTime(DateTime time) {
+    final difference = DateTime.now().difference(time);
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
     }
   }
 
@@ -153,14 +147,36 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
 
             // Issue List
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _issues.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final issue = _issues[index];
-                  return _buildIssueCard(issue);
-                },
+              child: ListenableBuilder(
+                listenable: AppProviders.of(context).reportViewModel,
+                builder: (context, _) {
+                  final reportVM = AppProviders.of(context).reportViewModel;
+                  
+                  if (reportVM.isLoading && reportVM.allReports.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  final issues = reportVM.allReports;
+                  if (issues.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No issues reported yet.\nBe the first!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: _subText, fontSize: 16),
+                      ),
+                    );
+                  }
+                  
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: issues.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final issue = issues[index];
+                      return _buildIssueCard(issue);
+                    },
+                  );
+                }
               ),
             ),
           ],
@@ -209,8 +225,8 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     );
   }
 
-  Widget _buildIssueCard(Map<String, dynamic> issue) {
-    final statusColor = _statusColor(issue['status']);
+  Widget _buildIssueCard(ReportModel issue) {
+    final statusColor = _statusColor(issue.status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
@@ -224,9 +240,12 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: _subText.withOpacity(0.4), width: 1.5),
+              border: Border.all(color: _subText.withValues(alpha: 0.4), width: 1.5),
+              image: issue.imageUrl != null 
+                ? DecorationImage(image: NetworkImage(issue.imageUrl!), fit: BoxFit.cover)
+                : null
             ),
-            child: Icon(Icons.info_outline, size: 18, color: _subText),
+            child: issue.imageUrl == null ? Icon(Icons.info_outline, size: 18, color: _subText) : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -234,7 +253,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  issue['title'],
+                  issue.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -243,8 +262,10 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  issue['address'],
+                  issue.location,
                   style: TextStyle(fontSize: 12, color: _subText),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -253,18 +274,18 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                issue['time'],
+                _formatTime(issue.createdAt),
                 style: TextStyle(fontSize: 11, color: _subText),
               ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  issue['status'],
+                  issue.status,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -285,7 +306,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
         color: _bg,
         border: Border(
           top: BorderSide(
-            color: _subText.withOpacity(0.15),
+            color: _subText.withValues(alpha: 0.15),
             width: 1,
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../widgets/theme_toggle.dart';
+import '../../core/di/app_providers.dart';
+import 'map_feed_screen.dart';
+import 'signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDark;
@@ -13,7 +14,16 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _showPassword = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.person_outline,
                       fieldColor: fieldColor,
                       textColor: textColor,
+                      controller: _emailController,
                     ),
                     const SizedBox(height: 16),
 
@@ -83,31 +94,59 @@ class _LoginScreenState extends State<LoginScreen> {
                       fieldColor: fieldColor,
                       textColor: textColor,
                       obscure: !_showPassword,
+                      controller: _passwordController,
                       onIconTap: () => setState(() => _showPassword = !_showPassword),
                     ),
                     const SizedBox(height: 32),
 
                     // Log In button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    ListenableBuilder(
+                      listenable: AppProviders.of(context).authViewModel,
+                      builder: (context, _) {
+                        final auth = AppProviders.of(context).authViewModel;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: auth.isLoading
+                                ? null
+                                : () async {
+                                    final success = await auth.signIn(
+                                      _emailController.text.trim(),
+                                      _passwordController.text,
+                                    );
+                                    if (success && context.mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => MapFeedScreen(
+                                              isDark: widget.isDark, onToggle: widget.onToggle),
+                                        ),
+                                      );
+                                    } else if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Login failed')));
+                                    }
+                                  },
+                            child: auth.isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                    'log in',
+                                    style: TextStyle(
+                                      color: widget.isDark ? Colors.black : Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          'log in',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                        );
+                      }
                     ),
                     const SizedBox(height: 16),
 
@@ -118,7 +157,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text("Don't have an account? ",
                             style: TextStyle(color: textColor, fontSize: 13)),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SignInScreen(
+                                  isDark: widget.isDark,
+                                  onToggle: widget.onToggle,
+                                ),
+                              ),
+                            );
+                          },
                           child: Text(
                             'SIGN IN',
                             style: TextStyle(
@@ -145,6 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     required Color fieldColor,
     required Color textColor,
+    required TextEditingController controller,
     bool obscure = false,
     VoidCallback? onIconTap,
   }) {
@@ -154,16 +204,17 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscure,
         style: TextStyle(color: textColor),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
+          hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           suffixIcon: GestureDetector(
             onTap: onIconTap,
-            child: Icon(icon, color: textColor.withOpacity(0.6)),
+            child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
           ),
         ),
       ),

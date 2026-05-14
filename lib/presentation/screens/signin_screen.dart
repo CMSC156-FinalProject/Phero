@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../widgets/theme_toggle.dart';
+import '../../core/di/app_providers.dart';
+import 'map_feed_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   final bool isDark;
@@ -14,8 +14,20 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+  
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +87,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       icon: Icons.person_outline,
                       fieldColor: fieldColor,
                       textColor: textColor,
+                      controller: _emailController,
                     ),
                     const SizedBox(height: 16),
 
@@ -85,6 +98,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       fieldColor: fieldColor,
                       textColor: textColor,
                       obscure: !_showPassword,
+                      controller: _passwordController,
                       onIconTap: () => setState(() => _showPassword = !_showPassword),
                     ),
                     const SizedBox(height: 16),
@@ -96,31 +110,64 @@ class _SignInScreenState extends State<SignInScreen> {
                       fieldColor: fieldColor,
                       textColor: textColor,
                       obscure: !_showConfirmPassword,
+                      controller: _confirmController,
                       onIconTap: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
                     ),
                     const SizedBox(height: 32),
 
                     // Sign In button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    ListenableBuilder(
+                      listenable: AppProviders.of(context).authViewModel,
+                      builder: (context, _) {
+                        final auth = AppProviders.of(context).authViewModel;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: auth.isLoading
+                                ? null
+                                : () async {
+                                    if (_passwordController.text != _confirmController.text) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Passwords do not match')));
+                                      return;
+                                    }
+                                    final success = await auth.register(
+                                      _emailController.text.trim(),
+                                      _passwordController.text,
+                                    );
+                                    if (success && context.mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => MapFeedScreen(
+                                              isDark: widget.isDark, onToggle: widget.onToggle),
+                                        ),
+                                      );
+                                    } else if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Registration failed')));
+                                    }
+                                  },
+                            child: auth.isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                    'sign in',
+                                    style: TextStyle(
+                                      color: widget.isDark ? Colors.black : Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          'sign in',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                        );
+                      }
                     ),
                     const SizedBox(height: 16),
 
@@ -132,7 +179,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             style: TextStyle(color: textColor, fontSize: 13)),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => LoginScreen(
@@ -168,6 +215,7 @@ class _SignInScreenState extends State<SignInScreen> {
     required IconData icon,
     required Color fieldColor,
     required Color textColor,
+    required TextEditingController controller,
     bool obscure = false,
     VoidCallback? onIconTap,
   }) {
@@ -177,16 +225,17 @@ class _SignInScreenState extends State<SignInScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscure,
         style: TextStyle(color: textColor),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
+          hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           suffixIcon: GestureDetector(
             onTap: onIconTap,
-            child: Icon(icon, color: textColor.withOpacity(0.6)),
+            child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
           ),
         ),
       ),

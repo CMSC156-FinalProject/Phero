@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'presentation/screens/splash_screen.dart';
+import 'core/di/app_providers.dart';
+import 'presentation/viewmodels/auth_viewmodel.dart';
+import 'presentation/viewmodels/report_viewmodel.dart';
 
-void main() {
-  runApp(const PheroApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  final authViewModel = AuthViewModel();
+  final reportViewModel = ReportViewModel();
+
+  runApp(
+    AppProviders(
+      authViewModel: authViewModel,
+      reportViewModel: reportViewModel,
+      child: const PheroApp(),
+    ),
+  );
 }
 
 class PheroApp extends StatefulWidget {
