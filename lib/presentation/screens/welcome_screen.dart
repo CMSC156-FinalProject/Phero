@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signin_screen.dart';
+import '../widgets/theme_toggle.dart';
 
 class WelcomeScreen extends StatelessWidget {
   final bool isDark;

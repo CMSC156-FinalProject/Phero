@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'report_screen.dart';
+import '../widgets/theme_toggle.dart';
 
 class MyReportsScreen extends StatefulWidget {
   final bool isDark;
