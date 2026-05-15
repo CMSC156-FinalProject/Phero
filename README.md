@@ -149,15 +149,6 @@ Responsible for integrating device hardware APIs, managing camera and GPS servic
 
 Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
 
-## 🚀 Future Enhancements
-
-* Push notifications for report updates
-* AI-assisted issue categorization
-* Offline report saving
-* Community verification and upvoting system
-* Analytics dashboard for local authorities
-* Accessibility and user experience improvements
-
 ## 🎯 Project Goal
 
 Phero aims to promote civic engagement by providing communities with an accessible platform for reporting, monitoring, and tracking public infrastructure concerns in an efficient and transparent manner.
