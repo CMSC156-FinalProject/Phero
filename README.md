@@ -1,93 +1,79 @@
 # Phero: Location-Based Community Reporting Tool
 
-**Phero** is a mobile-first community reporting application designed to help citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. Using mobile device hardware and cloud-based services, users can capture photos, automatically attach GPS coordinates, and submit reports to a centralized community feed where issues can be monitored and tracked in real time.
+**Phero** is a mobile-first community reporting application designed to help citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. By integrating mobile device hardware with cloud-based services, the application enables users to capture photos, attach precise GPS coordinates, and submit reports to a centralized platform where issues can be monitored and tracked in real time.
 
----
+## 📌 Overview
 
-# Overview
+Phero aims to strengthen communication between communities and local authorities through an accessible and efficient reporting platform. The application focuses on location-aware reporting, real-time issue visibility, and streamlined report management to encourage faster responses to public concerns.
 
-Phero aims to improve communication between communities and local authorities by providing a simple and accessible reporting platform. The application focuses on location-aware reporting, real-time issue visibility, and efficient status tracking to encourage faster responses to community concerns.
+## ✨ Key Features
 
----
+### 📍 Location-Based Reporting
 
-# Key Features
+Users can create reports by capturing photos and automatically attaching geographic coordinates through the device’s location services.
 
-## 📍 Location-Based Reporting
+### 🗺️ Interactive Map Feed
 
-Users can create reports by taking photos and automatically attaching precise GPS coordinates using the device’s location services.
+The application provides a live map interface that displays nearby reported issues using map markers, allowing users to easily identify incidents within their area.
 
-## 🗺️ Interactive Map Feed
+### 🔄 Report Status Tracking
 
-A live map interface displays nearby reported issues through map markers, allowing users to easily view incidents within their area.
-
-## 🔄 Report Status Tracking
-
-Users can monitor the progress of their submitted reports through a complete CRUD lifecycle, including:
+Users can monitor the progress of submitted reports through a structured report lifecycle:
 
 * Pending
 * Under Review
 * In Progress
 * Resolved
 
-## 📸 Hardware Integration
+### 📸 Hardware Integration
 
-The application integrates directly with device hardware including:
+The system integrates directly with device hardware and services, including:
 
 * Camera API
-* GPS / Location Services
+* GPS and Location Services
 * Media Storage Access
 
-## 🚨 Emergency Hotline Access
+### 🚨 Emergency Hotline Access
 
-Provides quick access to emergency contact hotlines and local authorities for urgent incidents.
+Provides quick access to emergency contact hotlines and local authorities for urgent incidents and public safety concerns.
 
-## 🏗️ MVC-Based Architecture
+### 🏗️ MVC-Based Architecture
 
-The project follows the **Model-View-Controller (MVC)** architecture to maintain clean separation between:
+The project follows the **Model-View-Controller (MVC)** architectural pattern to maintain a clean separation between:
 
-* UI components
-* Business logic
-* Hardware and service integrations
+* User Interface Components
+* Business Logic
+* Hardware and Service Integrations
 
----
-
-# Technology Stack
+## 🛠️ Technology Stack
 
 * **Framework:** Flutter
-* **Language:** Dart
+* **Programming Language:** Dart
 * **Database:** NoSQL Database
 * **Maps Integration:** Google Maps API
-* **State Management:** Flutter State Management
-* **Cloud Storage:** Firebase / Cloud Storage
+* **Cloud Services:** Firebase / Cloud Storage
 * **Authentication:** Firebase Authentication
+* **State Management:** Flutter State Management
 
----
+## 👥 Members and Designated Roles
 
-# Members and Designated Roles
+### **Angel May Janiola | Frontend & Geospatial Developer**
 
-### **Frontend & Geospatial Developer**
-
-**Angel May Janiola**
 Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
 
-### **Backend & Data Architect**
+### **Matthew Simpas | Backend & Data Architect**
 
-**Matthew Simpas**
-Responsible for designing the NoSQL database structure, optimizing geospatial queries, and handling cloud-based media storage.
+Responsible for designing the NoSQL database structure, optimizing geospatial queries, and managing cloud-based media storage.
 
-### **Hardware & State Lead**
+### **Chakinzo Sombito | Hardware & State Lead**
 
-**Chakinzo Sombito**
-Responsible for integrating device hardware APIs including camera and GPS services, managing permissions, and handling report submission state management.
+Responsible for integrating device hardware APIs, managing camera and GPS services, handling permissions, and maintaining report submission state management.
 
-### **Release & Version Control Manager**
+### **Sophe Mae Dela Cruz | Release & Version Control Manager**
 
-**Sophe Mae Dela Cruz**
-Responsible for maintaining the Git workflow, coordinating testing across devices, and ensuring stable version releases throughout development.
+Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
 
----
-
-# Project Structure
+## 📂 Project Structure
 
 ```plaintext
 lib/
@@ -164,19 +150,15 @@ lib/
 └── test/
 ```
 
----
-
-# Future Enhancements
+## 🚀 Future Enhancements
 
 * Push notifications for report updates
 * AI-assisted issue categorization
 * Offline report saving
-* Community upvoting and verification system
+* Community verification and upvoting system
 * Analytics dashboard for local authorities
-* Dark mode and accessibility improvements
+* Accessibility and user experience improvements
 
----
+## 🎯 Project Goal
 
-# Goal of the Project
-
-Phero aims to promote civic engagement by giving communities an accessible platform to report and monitor public infrastructure concerns efficiently and transparently.
+Phero aims to promote civic engagement by providing communities with an accessible platform for reporting, monitoring, and tracking public infrastructure concerns in an efficient and transparent manner.
