@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 import 'report_screen.dart';
@@ -19,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _logoScale;
   late Animation<double> _logoFade;
-  late Animation<double> _greenScale;
+  late Animation<double> _greenRadius; // radius in 0.0–1.0 of full coverage
 
   bool _tapped = false;
 
@@ -32,7 +33,6 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    // Phase 1: logo zooms toward user
     _logoScale = Tween<double>(begin: 1.0, end: 8.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -40,7 +40,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Logo fades out as it zooms
     _logoFade = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -48,8 +47,8 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Phase 2: green floods screen
-    _greenScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // Goes from 0 → 1 where 1 = fully covers screen
+    _greenRadius = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
@@ -88,10 +87,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final bg = widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final size = MediaQuery.of(context).size;
-    final circleDiameter =
-        (size.width * size.width + size.height * size.height)
-            .clamp(800.0, 4000.0);
+    final green = widget.isDark
+        ? const Color(0xFF2ECC71)
+        : const Color(0xFF3B4A2F);
 
     return GestureDetector(
       onTap: _onTap,
@@ -141,20 +139,12 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                // ── Green flood from center ───────────────────────────────
-                Align(
-                  alignment: Alignment.center,
-                  child: Transform.scale(
-                    scale: _greenScale.value,
-                    child: Container(
-                      width: circleDiameter,
-                      height: circleDiameter,
-                      decoration: BoxDecoration(
-                        color: widget.isDark
-                            ? const Color(0xFF2ECC71)
-                            : const Color(0xFF3B4A2F),
-                        shape: BoxShape.circle,
-                      ),
+                // ── Green flood — CustomPainter draws circle that fills screen ──
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _GreenFloodPainter(
+                      progress: _greenRadius.value,
+                      color: green,
                     ),
                   ),
                 ),
@@ -176,7 +166,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                // ── Moon / Sun toggle — always on top ────────────────────
+                // ── Moon / Sun toggle — always on top ─────────────────────
                 Positioned(
                   top: 15,
                   right: 15,
@@ -200,4 +190,29 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
+}
+
+// Draws a circle from the center that grows to cover the entire canvas
+class _GreenFloodPainter extends CustomPainter {
+  final double progress; // 0.0 → 1.0
+  final Color color;
+
+  _GreenFloodPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    // Max radius = distance from center to farthest corner
+    final maxRadius = sqrt(
+      pow(size.width / 2, 2) + pow(size.height / 2, 2),
+    ) * 1.05; // tiny extra to eliminate edge gap
+
+    final paint = Paint()..color = color;
+    canvas.drawCircle(center, maxRadius * progress, paint);
+  }
+
+  @override
+  bool shouldRepaint(_GreenFloodPainter old) => old.progress != progress;
 }
