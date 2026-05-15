@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
+import 'report_screen.dart';
+import 'map_feed_screen.dart';
+import 'emergency_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool isDark;
@@ -15,11 +18,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 7), () {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => WelcomeScreen(
+          builder: (_) => EmergencyScreen( //--> change this part to transition
             isDark: widget.isDark,
             onToggle: widget.onToggle,
           ),
@@ -63,20 +66,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 500,
                 opacity: const AlwaysStoppedAnimation(0.6),
               ),
-            ),
-          ),
-
-          // Toggle button top right
-          Positioned(
-            top: 15,
-            right: 15,
-            child: IconButton(
-              icon: Icon(
-                widget.isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                color: widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E),
-                size: 28,
-              ),
-              onPressed: widget.onToggle,
             ),
           ),
 
