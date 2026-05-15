@@ -1,22 +1,182 @@
 # Phero: Location-Based Community Reporting Tool
-*Phero* is a mobile-first application designed to empower citizens to report local infrastructure issues such as potholes, broken streetlights, or vandalism directly to a centralized community feed. By leveraging device hardware and cloud infrastructure, the app allows users to snap a photo of an issue, automatically tag it with geographic coordinates, and track the resolution status in real-time.
 
-## Key Features / Program Structure
-* **Program Structure:** The project will utilize an MVC pattern, keeping hardware API calls isolated in controller files away from the visual map and camera views.
-* **Hardware Integration:** Seamless capture of photos and precise GPS coordinates.
-Interactive Map Feed: A localized map view displaying pins for all reported issues in the surrounding area.
-* **Status Tracking Lifecycle:** Robust CRUD operations allowing users to track the progression of their submitted reports.
-* **Suggested:** Emergency contact hotline (local authorities)
+**Phero** is a mobile-first community reporting application designed to help citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. Using mobile device hardware and cloud-based services, users can capture photos, automatically attach GPS coordinates, and submit reports to a centralized community feed where issues can be monitored and tracked in real time.
 
-## Members and Designated Roles
-**Frontend & Geospatial Developer** - *Angel May Janiola* <br>
-&nbsp; &nbsp; Responsible for building the Flutter reporting screens and integrating the interactive Google Maps interface.
+---
 
-**Backend & Data Architect** - *Matthew Simpas* <br>
-&nbsp; &nbsp; Responsible for structuring the NoSQL database to efficiently query geospatial data and managing the storage of high-resolution photo reports.
+# Overview
 
-**Hardware & State Lead** - *Chakinzo Sombito* <br>
-&nbsp; &nbsp; Responsible for integrating the device's camera and GPS APIs, handling location permissions, and managing the state flow of submitting a new report to the backend. - chak
+Phero aims to improve communication between communities and local authorities by providing a simple and accessible reporting platform. The application focuses on location-aware reporting, real-time issue visibility, and efficient status tracking to encourage faster responses to community concerns.
 
-**Release & Version Control Manager** - *Sophe Mae Dela Cruz* <br>
-&nbsp; &nbsp; Responsible for maintaining the Git workflow across the team, orchestrating app testing across different simulated devices, and ensuring stable versioning during the development lifecycle.
+---
+
+# Key Features
+
+## 📍 Location-Based Reporting
+
+Users can create reports by taking photos and automatically attaching precise GPS coordinates using the device’s location services.
+
+## 🗺️ Interactive Map Feed
+
+A live map interface displays nearby reported issues through map markers, allowing users to easily view incidents within their area.
+
+## 🔄 Report Status Tracking
+
+Users can monitor the progress of their submitted reports through a complete CRUD lifecycle, including:
+
+* Pending
+* Under Review
+* In Progress
+* Resolved
+
+## 📸 Hardware Integration
+
+The application integrates directly with device hardware including:
+
+* Camera API
+* GPS / Location Services
+* Media Storage Access
+
+## 🚨 Emergency Hotline Access
+
+Provides quick access to emergency contact hotlines and local authorities for urgent incidents.
+
+## 🏗️ MVC-Based Architecture
+
+The project follows the **Model-View-Controller (MVC)** architecture to maintain clean separation between:
+
+* UI components
+* Business logic
+* Hardware and service integrations
+
+---
+
+# Technology Stack
+
+* **Framework:** Flutter
+* **Language:** Dart
+* **Database:** NoSQL Database
+* **Maps Integration:** Google Maps API
+* **State Management:** Flutter State Management
+* **Cloud Storage:** Firebase / Cloud Storage
+* **Authentication:** Firebase Authentication
+
+---
+
+# Members and Designated Roles
+
+### **Frontend & Geospatial Developer**
+
+**Angel May Janiola**
+Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
+
+### **Backend & Data Architect**
+
+**Matthew Simpas**
+Responsible for designing the NoSQL database structure, optimizing geospatial queries, and handling cloud-based media storage.
+
+### **Hardware & State Lead**
+
+**Chakinzo Sombito**
+Responsible for integrating device hardware APIs including camera and GPS services, managing permissions, and handling report submission state management.
+
+### **Release & Version Control Manager**
+
+**Sophe Mae Dela Cruz**
+Responsible for maintaining the Git workflow, coordinating testing across devices, and ensuring stable version releases throughout development.
+
+---
+
+# Project Structure
+
+```plaintext
+lib/
+├── main.dart
+├── app.dart
+│
+├── core/
+│   ├── theme.dart
+│   ├── routes.dart
+│   ├── constants.dart
+│   ├── services.dart
+│   ├── helpers.dart
+│   │
+│   └── widgets/
+│       ├── custom_button.dart
+│       ├── custom_textfield.dart
+│       ├── custom_appbar.dart
+│       ├── loading_indicator.dart
+│       └── bottom_navbar.dart
+│
+├── features/
+│
+│   ├── splash/
+│   │   └── splash_screen.dart
+│   │
+│   ├── auth/
+│   │   ├── auth_controller.dart
+│   │   ├── auth_repository.dart
+│   │   ├── login_screen.dart
+│   │   ├── signup_screen.dart
+│   │   ├── admin_login_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── auth_form.dart
+│   │       └── auth_header.dart
+│   │
+│   ├── dashboard/
+│   │   ├── home_screen.dart
+│   │   ├── admin_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── dashboard_card.dart
+│   │       └── quick_action_button.dart
+│   │
+│   ├── reports/
+│   │   ├── reports_controller.dart
+│   │   ├── reports_repository.dart
+│   │   ├── report_screen.dart
+│   │   ├── my_reports_screen.dart
+│   │   ├── map_feed_screen.dart
+│   │   ├── manage_reports_screen.dart
+│   │   ├── reports_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── report_card.dart
+│   │       ├── report_form.dart
+│   │       ├── report_map.dart
+│   │       └── status_badge.dart
+│   │
+│   ├── emergency/
+│   │   ├── emergency_controller.dart
+│   │   ├── emergency_screen.dart
+│   │   ├── emergency_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       └── emergency_button.dart
+│   │
+│   └── settings/
+│       ├── settings_screen.dart
+│       │
+│       └── widgets/
+│           └── theme_toggle.dart
+│
+└── test/
+```
+
+---
+
+# Future Enhancements
+
+* Push notifications for report updates
+* AI-assisted issue categorization
+* Offline report saving
+* Community upvoting and verification system
+* Analytics dashboard for local authorities
+* Dark mode and accessibility improvements
+
+---
+
+# Goal of the Project
+
+Phero aims to promote civic engagement by giving communities an accessible platform to report and monitor public infrastructure concerns efficiently and transparently.
