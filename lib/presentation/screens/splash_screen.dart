@@ -61,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => WelcomeScreen(
+            pageBuilder: (_, __, ___) => LoginScreen(
               isDark: widget.isDark,
               onToggle: widget.onToggle,
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme_toggle.dart';
+import 'signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDark;
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'LOG IN',
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         color: textColor,
                         letterSpacing: 2,
                       ),
@@ -118,13 +119,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text("Don't have an account? ",
                             style: TextStyle(color: textColor, fontSize: 13)),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SignInScreen(
+                                  isDark: widget.isDark,
+                                  onToggle: widget.onToggle,
+                                ),
+                              ),
+                            );
+                          },
                           child: Text(
                             'SIGN IN',
                             style: TextStyle(
                               color: primary,
                               fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
