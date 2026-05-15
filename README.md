@@ -6,73 +6,6 @@
 
 Phero aims to strengthen communication between communities and local authorities through an accessible and efficient reporting platform. The application focuses on location-aware reporting, real-time issue visibility, and streamlined report management to encourage faster responses to public concerns.
 
-## ✨ Key Features
-
-### 📍 Location-Based Reporting
-
-Users can create reports by capturing photos and automatically attaching geographic coordinates through the device’s location services.
-
-### 🗺️ Interactive Map Feed
-
-The application provides a live map interface that displays nearby reported issues using map markers, allowing users to easily identify incidents within their area.
-
-### 🔄 Report Status Tracking
-
-Users can monitor the progress of submitted reports through a structured report lifecycle:
-
-* Pending
-* Under Review
-* In Progress
-* Resolved
-
-### 📸 Hardware Integration
-
-The system integrates directly with device hardware and services, including:
-
-* Camera API
-* GPS and Location Services
-* Media Storage Access
-
-### 🚨 Emergency Hotline Access
-
-Provides quick access to emergency contact hotlines and local authorities for urgent incidents and public safety concerns.
-
-### 🏗️ MVC-Based Architecture
-
-The project follows the **Model-View-Controller (MVC)** architectural pattern to maintain a clean separation between:
-
-* User Interface Components
-* Business Logic
-* Hardware and Service Integrations
-
-## 🛠️ Technology Stack
-
-* **Framework:** Flutter
-* **Programming Language:** Dart
-* **Database:** NoSQL Database
-* **Maps Integration:** Google Maps API
-* **Cloud Services:** Firebase / Cloud Storage
-* **Authentication:** Firebase Authentication
-* **State Management:** Flutter State Management
-
-## 👥 Members and Designated Roles
-
-### **Angel May Janiola | Frontend & Geospatial Developer**
-
-Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
-
-### **Matthew Simpas | Backend & Data Architect**
-
-Responsible for designing the NoSQL database structure, optimizing geospatial queries, and managing cloud-based media storage.
-
-### **Chakinzo Sombito | Hardware & State Lead**
-
-Responsible for integrating device hardware APIs, managing camera and GPS services, handling permissions, and maintaining report submission state management.
-
-### **Sophe Mae Dela Cruz | Release & Version Control Manager**
-
-Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
-
 ## 📂 Project Structure
 
 ```plaintext
@@ -149,6 +82,72 @@ lib/
 │
 └── test/
 ```
+## ✨ Key Features
+
+### 📍 Location-Based Reporting
+
+Users can create reports by capturing photos and automatically attaching geographic coordinates through the device’s location services.
+
+### 🗺️ Interactive Map Feed
+
+The application provides a live map interface that displays nearby reported issues using map markers, allowing users to easily identify incidents within their area.
+
+### 🔄 Report Status Tracking
+
+Users can monitor the progress of submitted reports through a structured report lifecycle:
+
+* Pending
+* Under Review
+* In Progress
+* Resolved
+
+### 📸 Hardware Integration
+
+The system integrates directly with device hardware and services, including:
+
+* Camera API
+* GPS and Location Services
+* Media Storage Access
+
+### 🚨 Emergency Hotline Access
+
+Provides quick access to emergency contact hotlines and local authorities for urgent incidents and public safety concerns.
+
+### 🏗️ MVC-Based Architecture
+
+The project follows the **Model-View-Controller (MVC)** architectural pattern to maintain a clean separation between:
+
+* User Interface Components
+* Business Logic
+* Hardware and Service Integrations
+
+## 🛠️ Technology Stack
+
+* **Framework:** Flutter
+* **Programming Language:** Dart
+* **Database:** NoSQL Database
+* **Maps Integration:** Google Maps API
+* **Cloud Services:** Firebase / Cloud Storage
+* **Authentication:** Firebase Authentication
+* **State Management:** Flutter State Management
+
+## 👥 Members and Designated Roles
+
+### **Angel May Janiola | Frontend & Geospatial Developer**
+
+Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
+
+### **Matthew Simpas | Backend & Data Architect**
+
+Responsible for designing the NoSQL database structure, optimizing geospatial queries, and managing cloud-based media storage.
+
+### **Chakinzo Sombito | Hardware & State Lead**
+
+Responsible for integrating device hardware APIs, managing camera and GPS services, handling permissions, and maintaining report submission state management.
+
+### **Sophe Mae Dela Cruz | Release & Version Control Manager**
+
+Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
 
 ## 🚀 Future Enhancements
 
