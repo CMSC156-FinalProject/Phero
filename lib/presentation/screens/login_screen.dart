@@ -28,19 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Toggle button top right
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: Icon(
-                  widget.isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                  color: widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E),
-                  size: 28,
-                ),
-                onPressed: widget.onToggle,
-              ),
-            ),
 
             Center(
               child: SingleChildScrollView(
