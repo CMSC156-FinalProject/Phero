@@ -4,12 +4,14 @@ import '../repositories/report_repository.dart';
 import '../repositories/location_service.dart';
 import '../repositories/camera_service.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/storage_service.dart';
 
 class SubmitNewReportUseCase {
   final ReportRepository _reportRepository;
   final LocationService _locationService;
   final CameraService _cameraService;
   final AuthRepository _authRepository;
+  final StorageService _storageService;
   final Uuid _uuid = const Uuid();
 
   SubmitNewReportUseCase(
@@ -17,6 +19,7 @@ class SubmitNewReportUseCase {
     this._locationService,
     this._cameraService,
     this._authRepository,
+    this._storageService,
   );
 
   /// Executes the use case to submit a new report.
@@ -38,23 +41,27 @@ class SubmitNewReportUseCase {
       throw Exception('Could not determine current location. Please ensure location services are enabled.');
     }
 
-    // 3. Optionally capture media
-    String? mediaPath;
+    final reportId = _uuid.v4();
+
+    // 3. Optionally capture media and upload
+    String? mediaUrl;
     if (capturePhoto) {
       final media = await _cameraService.takePicture();
-      mediaPath = media?.path;
+      if (media != null) {
+        mediaUrl = await _storageService.uploadReportImage(user.id, reportId, media.path);
+      }
     }
 
     // 4. Construct Report
     final report = Report(
-      id: _uuid.v4(),
+      id: reportId,
       title: title,
       description: description,
       userId: user.id,
       timestamp: DateTime.now(),
       latitude: location.latitude,
       longitude: location.longitude,
-      mediaPath: mediaPath,
+      mediaPath: mediaUrl,
       status: 'pending',
     );
 

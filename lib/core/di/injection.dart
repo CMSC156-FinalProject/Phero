@@ -6,10 +6,12 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/report_repository.dart';
 import '../../domain/repositories/location_service.dart';
 import '../../domain/repositories/camera_service.dart';
+import '../../domain/repositories/storage_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/report_repository_impl.dart';
 import '../../data/services/location_service_impl.dart';
 import '../../data/services/camera_service_impl.dart';
+import '../../data/services/storage_service_impl.dart';
 
 // Use Cases
 import '../../domain/usecases/submit_new_report_usecase.dart';
@@ -30,14 +32,16 @@ class InjectionContainer {
       Provider<CameraService>(create: (_) => CameraServiceImpl()),
       Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
       Provider<ReportRepository>(create: (_) => ReportRepositoryImpl()),
+      Provider<StorageService>(create: (_) => StorageServiceImpl()),
 
       // 2. Use Cases (Depend on Repositories/Services)
-      ProxyProvider4<ReportRepository, LocationService, CameraService, AuthRepository, SubmitNewReportUseCase>(
-        update: (context, reportRepo, locationService, cameraService, authRepo, previous) => SubmitNewReportUseCase(
+      ProxyProvider5<ReportRepository, LocationService, CameraService, AuthRepository, StorageService, SubmitNewReportUseCase>(
+        update: (context, reportRepo, locationService, cameraService, authRepo, storageService, previous) => SubmitNewReportUseCase(
           reportRepo,
           locationService,
           cameraService,
           authRepo,
+          storageService,
         ),
       ),
       ProxyProvider<ReportRepository, FetchReportsUseCase>(
