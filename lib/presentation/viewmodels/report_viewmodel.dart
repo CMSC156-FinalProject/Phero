@@ -4,12 +4,14 @@ import '../../domain/usecases/submit_new_report_usecase.dart';
 import '../../domain/usecases/fetch_reports_usecase.dart';
 import '../../domain/usecases/fetch_nearby_reports_usecase.dart';
 import '../../domain/usecases/update_report_status_usecase.dart';
+import '../../domain/usecases/delete_report_usecase.dart';
 
 class ReportViewModel extends ChangeNotifier {
   final SubmitNewReportUseCase _submitNewReportUseCase;
   final FetchReportsUseCase _fetchReportsUseCase;
   final FetchNearbyReportsUseCase _fetchNearbyReportsUseCase;
   final UpdateReportStatusUseCase _updateReportStatusUseCase;
+  final DeleteReportUseCase _deleteReportUseCase;
 
   List<Report> _reports = [];
   bool _isLoading = false;
@@ -20,10 +22,12 @@ class ReportViewModel extends ChangeNotifier {
     required FetchReportsUseCase fetchReportsUseCase,
     required FetchNearbyReportsUseCase fetchNearbyReportsUseCase,
     required UpdateReportStatusUseCase updateReportStatusUseCase,
+    required DeleteReportUseCase deleteReportUseCase,
   })  : _submitNewReportUseCase = submitNewReportUseCase,
         _fetchReportsUseCase = fetchReportsUseCase,
         _fetchNearbyReportsUseCase = fetchNearbyReportsUseCase,
-        _updateReportStatusUseCase = updateReportStatusUseCase;
+        _updateReportStatusUseCase = updateReportStatusUseCase,
+        _deleteReportUseCase = deleteReportUseCase;
 
   List<Report> get reports => _reports;
   bool get isLoading => _isLoading;
@@ -93,6 +97,22 @@ class ReportViewModel extends ChangeNotifier {
       await _updateReportStatusUseCase.execute(reportId, newStatus);
       _setError(null);
       // Reload reports to reflect the updated status
+      await loadReports();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> deleteReport(String reportId) async {
+    _setLoading(true);
+    try {
+      await _deleteReportUseCase.execute(reportId);
+      _setError(null);
+      // Reload reports to reflect the deletion
       await loadReports();
       return true;
     } catch (e) {

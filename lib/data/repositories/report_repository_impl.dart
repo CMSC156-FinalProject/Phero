@@ -51,6 +51,14 @@ class ReportRepositoryImpl implements ReportRepository {
   }
 
   @override
+  Future<void> deleteReport(String reportId) async {
+    await _firestore
+        .collection('reports')
+        .doc(reportId)
+        .delete();
+  }
+
+  @override
   Future<List<Report>> getReportsNearby({
     required double latitude,
     required double longitude,
