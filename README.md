@@ -97,52 +97,48 @@ lib/
 ---
 
 ## Key Features
-
+**Location-Based Reporting**
 ```plaintext
-Location-Based Reporting
 - Submit reports with photos
 - Automatic GPS location tagging
 - Uses device location services
 ```
 
+**Interactive Map Feed**
 ```plaintext
-Interactive Map Feed
 - Displays nearby reported issues
 - Uses live map visualization
 - Map markers for easier monitoring
 ```
 
+**Report Status Tracking**
 ```plaintext
-Report Status Tracking
 - Pending
 - Under Review
 - In Progress
 - Resolved
 ```
 
+**Hardware Integration**
 ```plaintext
-Hardware Integration
 - Camera Access
 - GPS and Location Services
 - Media Storage
 ```
 
+**Emergency Hotline Access**
 ```plaintext
-Emergency Hotline Access
 - Quick access to emergency contacts
 - Supports urgent public safety concerns
 ```
-
+**Admin Dashboard**
 ```plaintext
-Admin Dashboard
 - Manage submitted reports
 - Update report statuses
 - Monitor emergency-related data
 ```
-
+**Feature-Based MVC Architecture**
 ```plaintext
-Feature-Based MVC Architecture
-
 Each feature contains its own:
 - Controllers
 - Repositories
