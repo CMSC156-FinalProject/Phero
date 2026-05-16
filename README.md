@@ -1,12 +1,23 @@
-# Phero: Location-Based Community Reporting Tool
+# Phero: Community Reporting Tool
 
-**Phero** is a mobile-first community reporting application designed to help citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. By integrating mobile device hardware with cloud-based services, the application enables users to capture photos, attach precise GPS coordinates, and submit reports to a centralized platform where issues can be monitored and tracked in real time.
+Phero is a mobile-first community reporting application that helps citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. Users can capture photos, attach GPS coordinates, and submit reports through a centralized platform where issues can be tracked in real time.
 
-## 📌 Overview
+---
 
-Phero aims to strengthen communication between communities and local authorities through an accessible and efficient reporting platform. The application focuses on location-aware reporting, real-time issue visibility, and streamlined report management to encourage faster responses to public concerns.
+## Overview
 
-## 📂 Project Structure
+Phero aims to improve communication between communities and local authorities through a simple and accessible reporting system.
+
+The application focuses on:
+
+- Location-based reporting
+- Real-time issue visibility
+- Faster report management
+- Community engagement
+
+---
+
+## Project Structure
 
 ```plaintext
 lib/
@@ -19,7 +30,6 @@ lib/
 │   ├── constants.dart
 │   ├── services.dart
 │   ├── helpers.dart
-│   │
 │   └── widgets/
 │       ├── custom_button.dart
 │       ├── custom_textfield.dart
@@ -28,132 +38,138 @@ lib/
 │       └── bottom_navbar.dart
 │
 ├── features/
-│
 │   ├── splash/
-│   │   └── splash_screen.dart
-│   │
 │   ├── auth/
-│   │   ├── auth_controller.dart
-│   │   ├── auth_repository.dart
-│   │   ├── login_screen.dart
-│   │   ├── signup_screen.dart
-│   │   ├── admin_login_screen.dart
-│   │   │
-│   │   └── widgets/
-│   │       ├── auth_form.dart
-│   │       └── auth_header.dart
-│   │
 │   ├── dashboard/
-│   │   ├── home_screen.dart
-│   │   ├── admin_dashboard_screen.dart
-│   │   │
-│   │   └── widgets/
-│   │       ├── dashboard_card.dart
-│   │       └── quick_action_button.dart
-│   │
 │   ├── reports/
-│   │   ├── reports_controller.dart
-│   │   ├── reports_repository.dart
-│   │   ├── report_screen.dart
-│   │   ├── my_reports_screen.dart
-│   │   ├── map_feed_screen.dart
-│   │   ├── manage_reports_screen.dart
-│   │   ├── reports_dashboard_screen.dart
-│   │   │
-│   │   └── widgets/
-│   │       ├── report_card.dart
-│   │       ├── report_form.dart
-│   │       ├── report_map.dart
-│   │       └── status_badge.dart
-│   │
 │   ├── emergency/
-│   │   ├── emergency_controller.dart
-│   │   ├── emergency_screen.dart
-│   │   ├── emergency_dashboard_screen.dart
-│   │   │
-│   │   └── widgets/
-│   │       └── emergency_button.dart
-│   │
 │   └── settings/
-│       ├── settings_screen.dart
-│       │
-│       └── widgets/
-│           └── theme_toggle.dart
 │
 └── test/
 ```
 
-## ✨ Key Features
+---
 
-### 📍 Location-Based Reporting
+## Key Features
 
-Users can create reports by capturing photos and automatically attaching geographic coordinates through the device's location services.
+```plaintext
+Location-Based Reporting
+- Submit reports with photos
+- Automatic GPS location tagging
+- Uses device location services
+```
 
-### 🗺️ Interactive Map Feed
+```plaintext
+Interactive Map Feed
+- Displays nearby reported issues
+- Uses live map visualization
+- Map markers for easier monitoring
+```
 
-The application provides a live map interface that displays nearby reported issues using map markers, allowing users to easily identify incidents within their area.
+```plaintext
+Report Status Tracking
+- Pending
+- Under Review
+- In Progress
+- Resolved
+```
 
-### 🔄 Report Status Tracking
+```plaintext
+Hardware Integration
+- Camera Access
+- GPS and Location Services
+- Media Storage
+```
 
-Users can monitor the progress of submitted reports through a structured report lifecycle:
+```plaintext
+Emergency Hotline Access
+- Quick access to emergency contacts
+- Supports urgent public safety concerns
+```
 
-* Pending
-* Under Review
-* In Progress
-* Resolved
+```plaintext
+Admin Dashboard
+- Manage submitted reports
+- Update report statuses
+- Monitor emergency-related data
+```
 
-### 📸 Hardware Integration
+```plaintext
+Feature-Based MVC Architecture
 
-The system integrates directly with device hardware and services, including:
+Each feature contains its own:
+- Controllers
+- Repositories
+- Screens
+- Widgets
 
-* Camera API
-* GPS and Location Services
-* Media Storage Access
+Benefits:
+- Better scalability
+- Easier maintenance
+- Cleaner code organization
+```
 
-### 🚨 Emergency Hotline Access
+---
 
-Provides quick access to emergency contact hotlines and local authorities for urgent incidents and public safety concerns.
+## Technology Stack
 
-### 🛡️ Admin Dashboard
+```plaintext
+Framework        : Flutter
+Language         : Dart
+Database         : Firebase Firestore
+Maps Integration : Google Maps API
+Cloud Services   : Firebase Cloud Storage
+Authentication   : Firebase Authentication
+State Management : Flutter State Management
+```
 
-A dedicated admin interface for managing and moderating submitted reports, updating report statuses, and overseeing emergency-related data across the platform.
+---
 
-### 🏗️ Feature-Based Architecture
+## Team Members and Roles
 
-The project follows a **feature-based MVC architecture**, organizing code by domain feature rather than by layer. Each feature encapsulates its own controller, repository, screens, and widgets, maintaining a clean separation between:
+```plaintext
+Angel May Janiola
+Frontend & Geospatial Developer
 
-* User Interface Components
-* Business Logic and Controllers
-* Data Repositories and Services
+- Develops the Flutter UI
+- Integrates Google Maps
+- Handles live location visualization
+```
 
-## 🛠️ Technology Stack
+```plaintext
+Matthew Simpas
+Backend & Data Architect
 
-* **Framework:** Flutter
-* **Programming Language:** Dart
-* **Database:** NoSQL Database (Firebase Firestore)
-* **Maps Integration:** Google Maps API
-* **Cloud Services:** Firebase / Cloud Storage
-* **Authentication:** Firebase Authentication
-* **State Management:** Flutter State Management
+- Designs database structure
+- Manages cloud storage
+- Optimizes geospatial queries
+```
 
-## 👥 Members and Designated Roles
+```plaintext
+Chakinzo Sombito
+Hardware & State Lead
 
-**Angel May Janiola | Frontend & Geospatial Developer**
+- Integrates camera and GPS services
+- Handles device permissions
+- Manages report submission state
+```
 
-Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
+```plaintext
+Sophe Mae Dela Cruz
+Release & Version Control Manager
 
-**Matthew Simpas | Backend & Data Architect**
+- Maintains Git workflow
+- Coordinates testing
+- Ensures stable releases
+```
 
-Responsible for designing the NoSQL database structure, optimizing geospatial queries, and managing cloud-based media storage.
+---
 
-**Chakinzo Sombito | Hardware & State Lead**
+## Project Goal
 
-Responsible for integrating device hardware APIs, managing camera and GPS services, handling permissions, and maintaining report submission state management.
-
-**Sophe Mae Dela Cruz | Release & Version Control Manager**
-
-Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
-
-## 🎯 Project Goal
-
-Phero aims to promote civic engagement by providing communities with an accessible platform for reporting, monitoring, and tracking public infrastructure concerns in an efficient and transparent manner.
+```plaintext
+Phero aims to promote civic engagement by providing
+communities with an accessible platform for reporting,
+monitoring, and tracking public infrastructure concerns
+efficiently and transparently.
+```
