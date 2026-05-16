@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../auth/login_screen.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   final bool isDark;
@@ -46,7 +48,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   ),
                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: _primary.withOpacity(0.2),
+                    backgroundColor: _primary.withValues(alpha: 0.2),
                     child: Text(
                       'US',
                       style: TextStyle(
@@ -88,7 +90,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         children: [
                           CircleAvatar(
                             radius: 24,
-                            backgroundColor: _primary.withOpacity(0.2),
+                            backgroundColor: _primary.withValues(alpha: 0.2),
                             child: Text(
                               'US',
                               style: TextStyle(
@@ -201,11 +203,23 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         color: _cardBg,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: Colors.red.withOpacity(0.3), width: 1),
+                            color: Colors.red.withValues(alpha: 0.3), width: 1),
                       ),
                       child: TextButton.icon(
-                        onPressed: () {
-                          // TODO: implement logout
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LoginScreen(
+                                  isDark: widget.isDark,
+                                  onToggle: widget.onToggle,
+                                ),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                         icon: const Icon(Icons.logout, color: Colors.red),
                         label: const Text(
@@ -243,7 +257,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   Widget _buildDivider() {
     return Divider(
-        height: 1, thickness: 1, color: _subText.withOpacity(0.1), indent: 56);
+        height: 1, thickness: 1, color: _subText.withValues(alpha: 0.1), indent: 56);
   }
 }
 
@@ -481,14 +495,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF2ECC71),
+        activeThumbColor: const Color(0xFF2ECC71),
       ),
     );
   }
 
   Widget _buildDivider() {
     return Divider(
-        height: 1, thickness: 1, color: _subText.withOpacity(0.1), indent: 56);
+        height: 1, thickness: 1, color: _subText.withValues(alpha: 0.1), indent: 56);
   }
 
   Widget _buildHeader(BuildContext context, String title) {
@@ -577,7 +591,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         Divider(
                             height: 1,
                             thickness: 1,
-                            color: _subText.withOpacity(0.1),
+                            color: _subText.withValues(alpha: 0.1),
                             indent: 56),
                         ListTile(
                           leading: Icon(Icons.security_outlined,
@@ -594,7 +608,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                             value: _twoFactor,
                             onChanged: (v) =>
                                 setState(() => _twoFactor = v),
-                            activeColor: const Color(0xFF2ECC71),
+                            activeThumbColor: const Color(0xFF2ECC71),
                           ),
                         ),
                       ],
@@ -622,7 +636,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         value: _anonymousReporting,
                         onChanged: (v) =>
                             setState(() => _anonymousReporting = v),
-                        activeColor: const Color(0xFF2ECC71),
+                        activeThumbColor: const Color(0xFF2ECC71),
                       ),
                     ),
                   ),
@@ -722,7 +736,7 @@ class _AppPreferencesScreenState extends State<AppPreferencesScreen> {
                       trailing: Switch(
                         value: widget.isDark,
                         onChanged: (_) => widget.onToggle(),
-                        activeColor: const Color(0xFF2ECC71),
+                        activeThumbColor: const Color(0xFF2ECC71),
                       ),
                     ),
                   ),
@@ -754,7 +768,7 @@ class _AppPreferencesScreenState extends State<AppPreferencesScreen> {
                         Divider(
                             height: 1,
                             thickness: 1,
-                            color: _subText.withOpacity(0.1),
+                            color: _subText.withValues(alpha: 0.1),
                             indent: 56),
                         ListTile(
                           leading: Icon(Icons.notifications_outlined,
@@ -771,7 +785,7 @@ class _AppPreferencesScreenState extends State<AppPreferencesScreen> {
                             value: _inAppSounds,
                             onChanged: (v) =>
                                 setState(() => _inAppSounds = v),
-                            activeColor: const Color(0xFF2ECC71),
+                            activeThumbColor: const Color(0xFF2ECC71),
                           ),
                         ),
                       ],
