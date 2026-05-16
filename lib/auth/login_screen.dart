@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signin_screen.dart';
+import '../reports/map_feed_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDark;
@@ -26,9 +27,17 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
       if (mounted) {
-        // Navigate or show success, assuming app state listens to auth changes
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logged in successfully!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MapFeedScreen(
+              isDark: widget.isDark,
+              onToggle: widget.onToggle,
+            ),
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {
