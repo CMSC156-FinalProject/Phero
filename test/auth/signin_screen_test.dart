@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:phero_app/presentation/screens/login_screen.dart';
+import 'package:phero_app/auth/signin_screen.dart';
 import 'package:phero_app/main.dart';
 
 void main() {
   Widget createWidgetForTesting( { bool isDark = false, VoidCallback? onToggle } ) {
     return MaterialApp(
-      home: LoginScreen(isDark: isDark, onToggle: onToggle ?? () {},),
+      home: SignInScreen(isDark: isDark, onToggle: onToggle ?? () {},),
     );
   }
   
-  // ====== LOGIN VALIDATION TESTS ======
-  group('Login Validation Tests', () {
+  // ====== SIGN IN VALIDATION TESTS ======
+  group('Sign In Validation Tests', () {
     testWidgets('Submitting empty fields show validation errors', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
       
-      final loginBtn = find.widgetWithText(ElevatedButton, 'log in');
+      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
 
-      await tester.tap(loginBtn);
+      await tester.tap(signInBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter your email'), findsOneWidget);
@@ -29,18 +29,34 @@ void main() {
       await tester.pumpWidget(createWidgetForTesting());
       
       final emailField = find.byType(TextField).first;
-      final loginBtn = find.widgetWithText(ElevatedButton, 'log in');
+      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
 
       await tester.enterText(emailField, 'isko@up.edu.ph');
       
-      await tester.tap(loginBtn);
+      await tester.tap(signInBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter your password'), findsOneWidget);
       expect(find.text('Please enter your email'), findsNothing);
     });
-  });
 
+    testWidgets('Unmatching Password and Confirm Password show error', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetForTesting());
+      
+      final passwordField = find.byType(TextField).first;
+      final confirmPasswordField = find.byType(TextField).last;
+      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
+
+      await tester.enterText(passwordField, 'password123');
+      await tester.enterText(confirmPasswordField, 'differentpassword');
+
+      await tester.tap(signInBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Passwords do not match. Please try again.'), findsOneWidget);
+    });
+  });
+  
   // ====== THEME TOGGLE TESTS ======
   group('Theme Toggle Tests', () {
       testWidgets('Show moon icon in light mode', (WidgetTester tester) async {
@@ -76,22 +92,23 @@ void main() {
 
       await tester.pumpWidget(createWidgetForTesting());
       final toggleBtns = find.byIcon(Icons.visibility_off_outlined);
-      expect(toggleBtns, findsNWidgets(1)); // Should find 1 toggle button for password field
+      expect(toggleBtns, findsNWidgets(2)); // Should find 2 toggle buttons for password and confirm password fields
 
       await tester.tap(toggleBtns.first);
+      await tester.tap(toggleBtns.last);
       
       await tester.pumpAndSettle(); // Waits for the UI to rebuild after tapping the toggle buttons
 
-      expect(toggleBtns, findsNWidgets(1));
+      expect(toggleBtns, findsNWidgets(2));
     });
   });
 
-  // ====== LOGIN NAVIGATION TESTS ======
-  group('Login Navigation Tests', () {
-    testWidgets('Elevated "Log in" button navigates to Report Page', (WidgetTester tester) async {
+  // ====== SIGN IN NAVIGATION TESTS ======
+  group('Sign in Navigation Tests', () {
+    testWidgets('Elevated "Sign In" button navigates to Report Page', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
 
-      final signInBtn = find.widgetWithText(ElevatedButton, 'log in');
+      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
       expect(signInBtn, findsOneWidget);
 
       await tester.tap(signInBtn);
@@ -99,7 +116,22 @@ void main() {
  
       expect(find.text('Report Issue'), findsOne); // Verifies that the Report page is shown
 
-      // Should that the Sign in page is gone
+      // Verifies that the Sign in page is gone
+      expect(find.text('Confirm Password'), findsNothing);
+    });
+
+    testWidgets('TextButton "Already have an account? Log in" navigates to Login Page', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetForTesting());
+  
+      final loginBtn = find.text('LOG IN');
+      expect(loginBtn, findsOne);
+  
+      await tester.tap(loginBtn);
+      await tester.pumpAndSettle();
+  
+      expect(find.text('LOG IN'), findsOne); // Verifies that the Login page is shown
+  
+      // Should verify that the Sign in page is gone
       expect(find.text('Confirm Password'), findsNothing);
     });
   });

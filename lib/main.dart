@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'presentation/screens/splash_screen.dart';
+import 'features/splash/splash_screen.dart';
 
 void main() {
   runApp(const PheroApp());

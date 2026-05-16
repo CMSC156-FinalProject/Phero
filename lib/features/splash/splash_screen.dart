@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'report_screen.dart';
-import 'map_feed_screen.dart';
-import 'emergency_screen.dart';
-import 'login_screen.dart'; //final destination after splash
+import '../../reports/report_screen.dart';
+import '../../reports/map_feed_screen.dart';
+import '../../emergency/emergency_screen.dart';
+import '../../auth/login_screen.dart'; //final destination after splash
 
 class SplashScreen extends StatefulWidget {
   final bool isDark;
