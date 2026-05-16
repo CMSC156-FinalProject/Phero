@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
 import 'my_reports_screen.dart';
+import '../emergency/emergency_screen.dart';
+import '../settings/account_settings_screen.dart';
 
 class MapFeedScreen extends StatefulWidget {
   final bool isDark;
@@ -75,6 +77,13 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           builder: (_) => MyReportsScreen(isDark: widget.isDark, onToggle: widget.onToggle),
         ),
       );
+    } else if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmergencyScreen(isDark: widget.isDark, onToggle: widget.onToggle),
+        ),
+      );
     }
   }
 
@@ -103,7 +112,17 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: widget.onToggle,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AccountSettingsScreen(
+                                isDark: widget.isDark,
+                                onToggle: widget.onToggle,
+                              ),
+                            ),
+                          );
+                        },
                         child: Container(
                           width: 36,
                           height: 36,
@@ -111,15 +130,10 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                             color: _primary,
                             shape: BoxShape.circle,
                           ),
-                          child: Center(
-                            child: Text(
-                              'US',
-                              style: TextStyle(
-                                color: widget.isDark ? Colors.black : Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          child: Icon(
+                            Icons.person,
+                            color: widget.isDark ? Colors.black : Colors.white,
+                            size: 20,
                           ),
                         ),
                       ),
