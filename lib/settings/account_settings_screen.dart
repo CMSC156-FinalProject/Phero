@@ -25,6 +25,98 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   String get _userEmail => _firebaseUser?.email ?? '';
 
+  void _showChangePasswordDialog(BuildContext context, bool isDark, Color primary, Color bg, Color cardBg, Color textColor, Color subText) {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    bool isLoading = false;
+    String? error;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) {
+        return AlertDialog(
+          backgroundColor: cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Change Password', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _dialogField('Current Password', currentCtrl, obscure: true, bgColor: bg, textColor: textColor),
+                const SizedBox(height: 12),
+                _dialogField('New Password', newCtrl, obscure: true, bgColor: bg, textColor: textColor),
+                const SizedBox(height: 12),
+                _dialogField('Confirm New Password', confirmCtrl, obscure: true, bgColor: bg, textColor: textColor),
+                if (error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: subText)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: isLoading ? null : () async {
+                final current = currentCtrl.text.trim();
+                final newPass = newCtrl.text.trim();
+                final confirm = confirmCtrl.text.trim();
+
+                if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) { setDialogState(() => error = 'All fields are required.'); return; }
+                if (newPass.length < 6) { setDialogState(() => error = 'New password must be at least 6 characters.'); return; }
+                if (newPass != confirm) { setDialogState(() => error = 'Passwords do not match.'); return; }
+
+                setDialogState(() { isLoading = true; error = null; });
+
+                try {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null || user.email == null) {
+                    setDialogState(() { error = 'No authenticated user found.'; isLoading = false; });
+                    return;
+                  }
+                  final credential = EmailAuthProvider.credential(email: user.email!, password: current);
+                  await user.reauthenticateWithCredential(credential);
+                  await user.updatePassword(newPass);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Password updated successfully.'), backgroundColor: primary));
+                  }
+                } on FirebaseAuthException catch (e) {
+                  setDialogState(() { error = e.message ?? 'Failed to update password.'; isLoading = false; });
+                } catch (_) {
+                  setDialogState(() { error = 'An error occurred. Please try again.'; isLoading = false; });
+                }
+              },
+              child: isLoading
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('Update', style: TextStyle(color: isDark ? Colors.black : Colors.white)),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _dialogField(String hint, TextEditingController ctrl, {bool obscure = false, required Color bgColor, required Color textColor}) {
+    return TextField(
+      controller: ctrl, obscureText: obscure,
+      style: TextStyle(color: textColor, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.4)),
+        filled: true, fillColor: bgColor,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeNotifier>().isDark;
@@ -48,12 +140,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Icon(Icons.chevron_left, color: primary, size: 28),
-                  ),
-                  Text('phero.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primary)),
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
-                    child: Icon(Icons.person, color: isDark ? Colors.black : Colors.white, size: 20),
                   ),
                 ],
               ),
@@ -113,11 +199,11 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           _buildDivider(subText),
                           _buildMenuItem(
                             context,
-                            icon: Icons.shield_outlined,
-                            label: 'Privacy & Security',
+                            icon: Icons.lock_outline,
+                            label: 'Change Password',
                             subText: subText,
                             textColor: textColor,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySecurityScreen())),
+                            onTap: () => _showChangePasswordDialog(context, isDark, primary, bg, cardBg, textColor, subText),
                           ),
                           _buildDivider(subText),
                           // Dark mode toggle inline
@@ -334,180 +420,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ),
       ],
     );
-  }
-
-  Widget _buildHeader(BuildContext context, String title, Color primary) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.chevron_left, color: primary, size: 28)),
-          const SizedBox(width: 8),
-          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primary)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Privacy & Security ──────────────────────────────────────────────────────
-
-class PrivacySecurityScreen extends StatefulWidget {
-  const PrivacySecurityScreen({super.key});
-  @override
-  State<PrivacySecurityScreen> createState() => _PrivacySecurityScreenState();
-}
-
-class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
-  bool _anonymousReporting = true;
-
-  void _showChangePasswordDialog(BuildContext context, bool isDark, Color primary, Color bg, Color cardBg, Color textColor, Color subText) {
-    final currentCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
-    final confirmCtrl = TextEditingController();
-    bool isLoading = false;
-    String? error;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) {
-        return AlertDialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Change Password', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _dialogField('Current Password', currentCtrl, obscure: true, bgColor: bg, textColor: textColor),
-                const SizedBox(height: 12),
-                _dialogField('New Password', newCtrl, obscure: true, bgColor: bg, textColor: textColor),
-                const SizedBox(height: 12),
-                _dialogField('Confirm New Password', confirmCtrl, obscure: true, bgColor: bg, textColor: textColor),
-                if (error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isLoading ? null : () => Navigator.pop(ctx),
-              child: Text('Cancel', style: TextStyle(color: subText)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              onPressed: isLoading ? null : () async {
-                final current = currentCtrl.text.trim();
-                final newPass = newCtrl.text.trim();
-                final confirm = confirmCtrl.text.trim();
-
-                if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) { setDialogState(() => error = 'All fields are required.'); return; }
-                if (newPass.length < 6) { setDialogState(() => error = 'New password must be at least 6 characters.'); return; }
-                if (newPass != confirm) { setDialogState(() => error = 'Passwords do not match.'); return; }
-
-                setDialogState(() { isLoading = true; error = null; });
-
-                try {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user == null || user.email == null) {
-                    setDialogState(() { error = 'No authenticated user found.'; isLoading = false; });
-                    return;
-                  }
-                  final credential = EmailAuthProvider.credential(email: user.email!, password: current);
-                  await user.reauthenticateWithCredential(credential);
-                  await user.updatePassword(newPass);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Password updated successfully.'), backgroundColor: primary));
-                  }
-                } on FirebaseAuthException catch (e) {
-                  setDialogState(() { error = e.message ?? 'Failed to update password.'; isLoading = false; });
-                } catch (_) {
-                  setDialogState(() { error = 'An error occurred. Please try again.'; isLoading = false; });
-                }
-              },
-              child: isLoading
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text('Update', style: TextStyle(color: isDark ? Colors.black : Colors.white)),
-            ),
-          ],
-        );
-      }),
-    );
-  }
-
-  Widget _dialogField(String hint, TextEditingController ctrl, {bool obscure = false, required Color bgColor, required Color textColor}) {
-    return TextField(
-      controller: ctrl, obscureText: obscure,
-      style: TextStyle(color: textColor, fontSize: 14),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.4)),
-        filled: true, fillColor: bgColor,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeNotifier>().isDark;
-    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
-    final subText = isDark ? const Color(0xFF8A9BB0) : const Color(0xFF8A9070);
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context, 'Privacy & Security', primary),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionLabel('SECURITY', subText),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
-                    child: ListTile(
-                      leading: Icon(Icons.lock_outline, color: subText, size: 22),
-                      title: Text('Change Password', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
-                      subtitle: Text('Update your account password', style: TextStyle(fontSize: 12, color: subText)),
-                      trailing: Icon(Icons.chevron_right, color: subText, size: 20),
-                      onTap: () => _showChangePasswordDialog(context, isDark, primary, bg, cardBg, textColor, subText),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSectionLabel('PRIVACY', subText),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
-                    child: ListTile(
-                      leading: Icon(Icons.visibility_off_outlined, color: subText, size: 22),
-                      title: Text('Anonymous Reporting', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
-                      subtitle: Text('Hide your name on public reports', style: TextStyle(fontSize: 12, color: subText)),
-                      trailing: Switch(value: _anonymousReporting, onChanged: (v) => setState(() => _anonymousReporting = v), activeThumbColor: const Color(0xFF2ECC71)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label, Color subText) {
-    return Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: subText, letterSpacing: 1));
   }
 
   Widget _buildHeader(BuildContext context, String title, Color primary) {
