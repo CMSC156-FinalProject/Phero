@@ -1,8 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../reports/report_screen.dart';
-import '../../reports/map_feed_screen.dart';
-import '../../emergency/emergency_screen.dart';
 import '../../auth/login_screen.dart'; //final destination after splash
 
 class SplashScreen extends StatefulWidget {
@@ -61,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => LoginScreen(
+            pageBuilder: (_, _, _) => LoginScreen(
               isDark: widget.isDark,
               onToggle: widget.onToggle,
             ),

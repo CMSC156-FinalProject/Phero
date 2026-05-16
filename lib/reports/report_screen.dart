@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
-import '../settings/widgets/theme_toggle.dart';
 
 class ReportScreen extends StatefulWidget {
   final bool isDark;
@@ -154,7 +153,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           Icon(
                             Icons.cloud_upload_outlined,
                             size: 36,
-                            color: _subText.withOpacity(0.7),
+                            color: _subText.withValues(alpha: 0.7),
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -180,7 +179,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             : const Color(0xFFEDF4E8),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _primary.withOpacity(0.3),
+                          color: _primary.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -318,7 +317,7 @@ class _ReportScreenState extends State<ReportScreen> {
       decoration: BoxDecoration(
         color: _bg,
         border: Border(
-          top: BorderSide(color: _subText.withOpacity(0.15), width: 1),
+          top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1),
         ),
       ),
       child: SafeArea(
