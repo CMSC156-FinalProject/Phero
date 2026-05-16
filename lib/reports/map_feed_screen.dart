@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'report_screen.dart';
 import 'my_reports_screen.dart';
-import '../settings/widgets/theme_toggle.dart';
 
 class MapFeedScreen extends StatefulWidget {
   final bool isDark;
@@ -15,7 +14,6 @@ class MapFeedScreen extends StatefulWidget {
 
 class _MapFeedScreenState extends State<MapFeedScreen> {
   bool _isListView = true;
-  int _selectedTab = 0;
 
   final List<Map<String, dynamic>> _issues = [
     {
@@ -156,7 +154,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _issues.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final issue = _issues[index];
                   return _buildIssueCard(issue);
@@ -224,7 +222,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: _subText.withOpacity(0.4), width: 1.5),
+              border: Border.all(color: _subText.withValues(alpha: 0.4), width: 1.5),
             ),
             child: Icon(Icons.info_outline, size: 18, color: _subText),
           ),
@@ -260,7 +258,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -285,7 +283,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
         color: _bg,
         border: Border(
           top: BorderSide(
-            color: _subText.withOpacity(0.15),
+            color: _subText.withValues(alpha: 0.15),
             width: 1,
           ),
         ),

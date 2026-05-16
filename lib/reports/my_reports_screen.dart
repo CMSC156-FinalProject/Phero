@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'report_screen.dart';
-import '../settings/widgets/theme_toggle.dart';
 
 class MyReportsScreen extends StatefulWidget {
   final bool isDark;
@@ -168,7 +167,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.15),
+                      color: _primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -204,7 +203,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: _filters.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final filter = _filters[index];
                   final isActive = _selectedFilter == filter;
@@ -217,7 +216,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                         color: isActive ? _primary : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isActive ? _primary : _subText.withOpacity(0.4),
+                          color: isActive ? _primary : _subText.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                       ),
@@ -244,7 +243,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _filteredReports.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final report = _filteredReports[index];
                   return _buildReportCard(report);
@@ -270,7 +269,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -287,12 +286,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             child: Container(
               width: 80,
               height: 85,
-              color: (report['imagePlaceholder'] as Color).withOpacity(
+              color: (report['imagePlaceholder'] as Color).withValues(alpha: 
                 widget.isDark ? 0.5 : 0.3,
               ),
               child: Icon(
                 Icons.broken_image_outlined,
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 size: 28,
               ),
             ),
@@ -353,10 +352,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.12),
+                            color: statusColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: statusColor.withOpacity(0.3),
+                              color: statusColor.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -393,7 +392,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       decoration: BoxDecoration(
         color: _bg,
         border: Border(
-          top: BorderSide(color: _subText.withOpacity(0.15), width: 1),
+          top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1),
         ),
       ),
       child: SafeArea(

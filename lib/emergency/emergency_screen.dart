@@ -97,7 +97,7 @@ class EmergencyScreen extends StatelessWidget {
                     ),
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: _primary.withOpacity(0.2),
+                      backgroundColor: _primary.withValues(alpha: 0.2),
                       child: Text(
                         'US',
                         style: TextStyle(
