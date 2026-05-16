@@ -45,6 +45,7 @@ dependencies:
   geolocator: ^14.0.2
   image_picker: ^1.2.2
   geoflutterfire_plus: ^0.0.34
+  provider: ^6.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
