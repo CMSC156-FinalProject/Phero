@@ -102,16 +102,33 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
                       child: Column(
                         children: [
-                          _buildMenuItem(context, icon: Icons.person_outline, label: 'Personal Information', subText: subText, textColor: textColor,
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.person_outline,
+                            label: 'Personal Information',
+                            subText: subText,
+                            textColor: textColor,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoScreen())).then((_) => setState(() {})),
                           ),
                           _buildDivider(subText),
-                          _buildMenuItem(context, icon: Icons.shield_outlined, label: 'Privacy & Security', subText: subText, textColor: textColor,
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.shield_outlined,
+                            label: 'Privacy & Security',
+                            subText: subText,
+                            textColor: textColor,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySecurityScreen())),
                           ),
                           _buildDivider(subText),
-                          _buildMenuItem(context, icon: Icons.settings_outlined, label: 'App Preferences', subText: subText, textColor: textColor,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppPreferencesScreen())),
+                          // Dark mode toggle inline
+                          ListTile(
+                            leading: Icon(Icons.dark_mode_outlined, color: subText, size: 22),
+                            title: Text('Dark Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
+                            trailing: Switch(
+                              value: isDark,
+                              onChanged: (_) => context.read<ThemeNotifier>().toggle(),
+                              activeThumbColor: const Color(0xFF2ECC71),
+                            ),
                           ),
                         ],
                       ),
@@ -483,129 +500,6 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label, Color subText) {
-    return Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: subText, letterSpacing: 1));
-  }
-
-  Widget _buildHeader(BuildContext context, String title, Color primary) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.chevron_left, color: primary, size: 28)),
-          const SizedBox(width: 8),
-          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primary)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── App Preferences ─────────────────────────────────────────────────────────
-
-class AppPreferencesScreen extends StatefulWidget {
-  const AppPreferencesScreen({super.key});
-  @override
-  State<AppPreferencesScreen> createState() => _AppPreferencesScreenState();
-}
-
-class _AppPreferencesScreenState extends State<AppPreferencesScreen> {
-  bool _inAppSounds = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeNotifier>().isDark;
-    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
-    final subText = isDark ? const Color(0xFF8A9BB0) : const Color(0xFF8A9070);
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context, 'App Preferences', primary),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionLabel('DISPLAY', subText),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
-                    child: ListTile(
-                      leading: Icon(Icons.dark_mode_outlined, color: subText, size: 22),
-                      title: Text('Dark Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
-                      subtitle: Text('Toggle dark appearance', style: TextStyle(fontSize: 12, color: subText)),
-                      trailing: Switch(
-                        value: isDark,
-                        onChanged: (_) => context.read<ThemeNotifier>().toggle(),
-                        activeThumbColor: const Color(0xFF2ECC71),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSectionLabel('GENERAL', subText),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: Icon(Icons.language_outlined, color: subText, size: 22),
-                          title: Text('Language', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
-                          subtitle: Text('English (US)', style: TextStyle(fontSize: 12, color: subText)),
-                          trailing: Icon(Icons.chevron_right, color: subText, size: 20),
-                          onTap: () => _showLanguageSheet(context, bg, cardBg, textColor, primary),
-                        ),
-                        Divider(height: 1, thickness: 1, color: subText.withValues(alpha: 0.1), indent: 56),
-                        ListTile(
-                          leading: Icon(Icons.music_note_outlined, color: subText, size: 22),
-                          title: Text('In-App Sounds', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
-                          subtitle: Text('Play sounds for alerts', style: TextStyle(fontSize: 12, color: subText)),
-                          trailing: Switch(value: _inAppSounds, onChanged: (v) => setState(() => _inAppSounds = v), activeThumbColor: const Color(0xFF2ECC71)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageSheet(BuildContext context, Color bg, Color cardBg, Color textColor, Color primary) {
-    final languages = ['English (US)', 'Filipino', 'Español', 'Français'];
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: cardBg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text('Select Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
-            ),
-            ...languages.map((lang) => ListTile(
-              title: Text(lang, style: TextStyle(color: textColor, fontSize: 15)),
-              trailing: lang == 'English (US)' ? Icon(Icons.check, color: primary) : null,
-              onTap: () => Navigator.pop(context),
-            )),
           ],
         ),
       ),
