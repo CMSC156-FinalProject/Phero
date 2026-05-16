@@ -167,9 +167,7 @@ Release & Version Control Manager
 
 ## Project Goal
 
-```plaintext
 Phero aims to promote civic engagement by providing
 communities with an accessible platform for reporting,
 monitoring, and tracking public infrastructure concerns
 efficiently and transparently.
-```
