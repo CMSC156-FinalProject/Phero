@@ -7,6 +7,7 @@ class Report {
   final double latitude;
   final double longitude;
   final String? mediaPath;
+  final String status;
 
   Report({
     required this.id,
@@ -17,6 +18,7 @@ class Report {
     required this.latitude,
     required this.longitude,
     this.mediaPath,
+    required this.status,
   });
 
   factory Report.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class Report {
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       mediaPath: json['mediaPath'] as String?,
+      status: json['status'] as String? ?? 'pending',
     );
   }
 
@@ -42,6 +45,7 @@ class Report {
       'latitude': latitude,
       'longitude': longitude,
       'mediaPath': mediaPath,
+      'status': status,
     };
   }
 }

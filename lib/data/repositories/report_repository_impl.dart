@@ -40,4 +40,12 @@ class ReportRepositoryImpl implements ReportRepository {
         .map((doc) => Report.fromJson(doc.data()))
         .toList();
   }
+
+  @override
+  Future<void> updateReportStatus(String reportId, String newStatus) async {
+    await _firestore
+        .collection('reports')
+        .doc(reportId)
+        .update({'status': newStatus});
+  }
 }

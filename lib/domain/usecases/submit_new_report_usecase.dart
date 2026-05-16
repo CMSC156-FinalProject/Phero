@@ -55,6 +55,7 @@ class SubmitNewReportUseCase {
       latitude: location.latitude,
       longitude: location.longitude,
       mediaPath: mediaPath,
+      status: 'pending',
     );
 
     // 5. Submit to Repository
