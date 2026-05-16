@@ -1,4 +1,4 @@
-# Phero: Community Reporting Tool
+# PHERO: Community Reporting Tool
 
 Phero is a mobile-first community reporting application that helps citizens report local infrastructure issues such as potholes, broken streetlights, flooding, vandalism, and other public concerns. Users can capture photos, attach GPS coordinates, and submit reports through a centralized platform where issues can be tracked in real time.
 
