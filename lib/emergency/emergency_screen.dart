@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'account_settings_screen.dart';
+import '../settings/account_settings_screen.dart';
 
 class EmergencyScreen extends StatelessWidget {
   final bool isDark;

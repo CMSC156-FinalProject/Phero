@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/theme_toggle.dart';
+import '../settings/widgets/theme_toggle.dart';
 
 class SignInScreen extends StatefulWidget {
   final bool isDark;

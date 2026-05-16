@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/theme_toggle.dart';
+import '../settings/widgets/theme_toggle.dart';
 import 'signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
