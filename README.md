@@ -138,19 +138,19 @@ The project follows a **feature-based MVC architecture**, organizing code by dom
 
 ## 👥 Members and Designated Roles
 
-### **Angel May Janiola | Frontend & Geospatial Developer**
+**Angel May Janiola | Frontend & Geospatial Developer**
 
 Responsible for developing the Flutter user interface and integrating geospatial functionalities such as Google Maps and live location visualization.
 
-### **Matthew Simpas | Backend & Data Architect**
+**Matthew Simpas | Backend & Data Architect**
 
 Responsible for designing the NoSQL database structure, optimizing geospatial queries, and managing cloud-based media storage.
 
-### **Chakinzo Sombito | Hardware & State Lead**
+**Chakinzo Sombito | Hardware & State Lead**
 
 Responsible for integrating device hardware APIs, managing camera and GPS services, handling permissions, and maintaining report submission state management.
 
-### **Sophe Mae Dela Cruz | Release & Version Control Manager**
+**Sophe Mae Dela Cruz | Release & Version Control Manager**
 
 Responsible for maintaining the Git workflow, coordinating testing across multiple devices, and ensuring stable version releases throughout the development lifecycle.
 
