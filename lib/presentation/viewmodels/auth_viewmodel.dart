@@ -16,6 +16,7 @@ class AuthViewModel extends ChangeNotifier {
   AppUser? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get isAdmin => _currentUser?.isAdmin ?? false;
 
   void _setLoading(bool value) {
     _isLoading = value;
