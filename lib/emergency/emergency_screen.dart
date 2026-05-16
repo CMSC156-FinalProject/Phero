@@ -248,28 +248,19 @@ class EmergencyScreen extends StatelessWidget {
   }
 
   void _onTabTapped(BuildContext context, int index) {
-    if (index == 3) return; // already on Emergency
+    if (index == 3) return;
     if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MapFeedScreen(isDark: isDark, onToggle: onToggle),
-        ),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => MapFeedScreen(isDark: isDark, onToggle: onToggle),
+      ));
     } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ReportScreen(isDark: isDark, onToggle: onToggle),
-        ),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => ReportScreen(isDark: isDark, onToggle: onToggle),
+      ));
     } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MyReportsScreen(isDark: isDark, onToggle: onToggle),
-        ),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => MyReportsScreen(isDark: isDark, onToggle: onToggle),
+      ));
     }
   }
 
@@ -277,12 +268,7 @@ class EmergencyScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: _bg,
-        border: Border(
-          top: BorderSide(
-            color: _subText.withValues(alpha: 0.15),
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -312,14 +298,8 @@ class EmergencyScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 22, color: color),
           const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: color,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 10, color: color,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
         ],
       ),
     );

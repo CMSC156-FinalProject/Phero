@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
+import '../emergency/emergency_screen.dart';
+import '../settings/account_settings_screen.dart';
 
 class ReportScreen extends StatefulWidget {
   final bool isDark;
@@ -39,6 +41,13 @@ class _ReportScreenState extends State<ReportScreen> {
           builder: (_) => MyReportsScreen(isDark: widget.isDark, onToggle: widget.onToggle),
         ),
       );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmergencyScreen(isDark: widget.isDark, onToggle: widget.onToggle),
+        ),
+      );
     }
   }
 
@@ -65,7 +74,15 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: widget.onToggle,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AccountSettingsScreen(
+                          isDark: widget.isDark,
+                          onToggle: widget.onToggle,
+                        ),
+                      ),
+                    ),
                     child: Container(
                       width: 36,
                       height: 36,
@@ -73,15 +90,10 @@ class _ReportScreenState extends State<ReportScreen> {
                         color: _primary,
                         shape: BoxShape.circle,
                       ),
-                      child: Center(
-                        child: Text(
-                          'US',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      child: Icon(
+                        Icons.person,
+                        color: widget.isDark ? Colors.black : Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),

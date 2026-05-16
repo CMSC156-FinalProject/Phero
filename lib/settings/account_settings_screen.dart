@@ -46,16 +46,17 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       color: _primary,
                     ),
                   ),
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: _primary.withValues(alpha: 0.2),
-                    child: Text(
-                      'US',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: _primary,
-                      ),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: widget.isDark ? Colors.black : Colors.white,
+                      size: 20,
                     ),
                   ),
                 ],
@@ -91,12 +92,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: _primary.withValues(alpha: 0.2),
-                            child: Text(
-                              'US',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _primary,
-                              ),
+                            child: Icon(
+                              Icons.person,
+                              color: _primary,
+                              size: 24,
                             ),
                           ),
                           const SizedBox(width: 14),
