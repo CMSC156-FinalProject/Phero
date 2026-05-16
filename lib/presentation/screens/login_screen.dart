@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme_toggle.dart';
+import 'signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDark;
@@ -27,19 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Toggle button top right
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: Icon(
-                  widget.isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                  color: widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E),
-                  size: 28,
-                ),
-                onPressed: widget.onToggle,
-              ),
-            ),
 
             Center(
               child: SingleChildScrollView(
@@ -58,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'LOG IN',
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         color: textColor,
                         letterSpacing: 2,
                       ),
@@ -118,13 +106,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text("Don't have an account? ",
                             style: TextStyle(color: textColor, fontSize: 13)),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SignInScreen(
+                                  isDark: widget.isDark,
+                                  onToggle: widget.onToggle,
+                                ),
+                              ),
+                            );
+                          },
                           child: Text(
                             'SIGN IN',
                             style: TextStyle(
                               color: primary,
                               fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
