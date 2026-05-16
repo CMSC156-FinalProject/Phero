@@ -82,11 +82,12 @@ lib/
 │
 └── test/
 ```
+
 ## ✨ Key Features
 
 ### 📍 Location-Based Reporting
 
-Users can create reports by capturing photos and automatically attaching geographic coordinates through the device’s location services.
+Users can create reports by capturing photos and automatically attaching geographic coordinates through the device's location services.
 
 ### 🗺️ Interactive Map Feed
 
@@ -113,19 +114,23 @@ The system integrates directly with device hardware and services, including:
 
 Provides quick access to emergency contact hotlines and local authorities for urgent incidents and public safety concerns.
 
-### 🏗️ MVC-Based Architecture
+### 🛡️ Admin Dashboard
 
-The project follows the **Model-View-Controller (MVC)** architectural pattern to maintain a clean separation between:
+A dedicated admin interface for managing and moderating submitted reports, updating report statuses, and overseeing emergency-related data across the platform.
+
+### 🏗️ Feature-Based Architecture
+
+The project follows a **feature-based MVC architecture**, organizing code by domain feature rather than by layer. Each feature encapsulates its own controller, repository, screens, and widgets, maintaining a clean separation between:
 
 * User Interface Components
-* Business Logic
-* Hardware and Service Integrations
+* Business Logic and Controllers
+* Data Repositories and Services
 
 ## 🛠️ Technology Stack
 
 * **Framework:** Flutter
 * **Programming Language:** Dart
-* **Database:** NoSQL Database
+* **Database:** NoSQL Database (Firebase Firestore)
 * **Maps Integration:** Google Maps API
 * **Cloud Services:** Firebase / Cloud Storage
 * **Authentication:** Firebase Authentication
