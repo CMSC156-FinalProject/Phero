@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 import '../../domain/models/report.dart';
 import '../../domain/repositories/report_repository.dart';
 
@@ -47,5 +48,32 @@ class ReportRepositoryImpl implements ReportRepository {
         .collection('reports')
         .doc(reportId)
         .update({'status': newStatus});
+  }
+
+  @override
+  Future<List<Report>> getReportsNearby({
+    required double latitude,
+    required double longitude,
+    required double radiusInKm,
+  }) async {
+    final geoFirePoint = GeoFirePoint(GeoPoint(latitude, longitude));
+
+    final stream = GeoCollectionReference<Map<String, dynamic>>(
+      _firestore.collection('reports'),
+    ).subscribeWithin(
+      center: geoFirePoint,
+      radiusInKm: radiusInKm,
+      field: 'geoHash',
+      geopointFrom: (data) => GeoPoint(data['latitude'] as double, data['longitude'] as double),
+      strictMode: true,
+    );
+
+    // We get the first emission from the stream.
+    // In a real application, you might want to return the Stream directly for realtime updates.
+    final snapshots = await stream.first;
+
+    return snapshots
+        .map((snapshot) => Report.fromJson(snapshot.data()!))
+        .toList();
   }
 }

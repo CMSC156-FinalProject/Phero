@@ -5,4 +5,5 @@ abstract class ReportRepository {
   Future<List<Report>> getReports();
   Future<List<Report>> getUserReports(String userId);
   Future<void> updateReportStatus(String reportId, String newStatus);
+  Future<List<Report>> getReportsNearby({required double latitude, required double longitude, required double radiusInKm});
 }
