@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/map_feed_screen.dart';
+import '../reports/report_screen.dart';
+import '../reports/my_reports_screen.dart';
 
 class EmergencyScreen extends StatelessWidget {
   final bool isDark;
@@ -68,6 +71,7 @@ class EmergencyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
+      bottomNavigationBar: _buildBottomNav(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -95,16 +99,17 @@ class EmergencyScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: _primary.withValues(alpha: 0.2),
-                      child: Text(
-                        'US',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: _primary,
-                        ),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person,
+                        color: isDark ? Colors.black : Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -238,6 +243,84 @@ class EmergencyScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _onTabTapped(BuildContext context, int index) {
+    if (index == 3) return; // already on Emergency
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MapFeedScreen(isDark: isDark, onToggle: onToggle),
+        ),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReportScreen(isDark: isDark, onToggle: onToggle),
+        ),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MyReportsScreen(isDark: isDark, onToggle: onToggle),
+        ),
+      );
+    }
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _bg,
+        border: Border(
+          top: BorderSide(
+            color: _subText.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(context, Icons.map_outlined, 'Map Feed', 0),
+              _buildNavItem(context, Icons.camera_alt_outlined, 'Report', 1),
+              _buildNavItem(context, Icons.assignment_outlined, 'My Reports', 2),
+              _buildNavItem(context, Icons.phone_outlined, 'Emergency', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(BuildContext context, IconData icon, String label, int index) {
+    final isActive = index == 3;
+    final color = isActive ? _primary : _subText;
+    return GestureDetector(
+      onTap: () => _onTabTapped(context, index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 22, color: color),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: color,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
   }
