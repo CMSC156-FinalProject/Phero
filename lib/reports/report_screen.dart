@@ -1,4 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
 
@@ -13,8 +18,26 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  final TextEditingController _categoryController = TextEditingController();
+  // File? _image;
+  XFile? _image;
+  final ImagePicker _picker = ImagePicker();
+
+  // Issue Category Dropdown
+  String? _selectedCategory;
+  final List<String> _categories = [
+    'Broken Sidewalk',
+    'Broken Streetlight',
+    'Drainage Issue',
+    'Fallen Tree',
+    'Graffiti',
+    'Illegal Dumping',
+    'Pothole',
+    'Spaghetti Wires',
+    'Other',
+  ];
+
   final TextEditingController _descriptionController = TextEditingController();
+  late bool _isLoading = false;
 
   Color get _primary => widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
   Color get _bg => widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
@@ -39,6 +62,85 @@ class _ReportScreenState extends State<ReportScreen> {
           builder: (_) => MyReportsScreen(isDark: widget.isDark, onToggle: widget.onToggle),
         ),
       );
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80, // Compress image to 80% quality to save bandwidth
+      );
+      if (picked != null) {
+        // setState(() => _image = File(picked.path));
+        setState(() => _image = picked);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to open camera: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitReport() async {
+    if (_image == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please attach an evidence photo')),
+      );
+      return;
+    }
+    
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an Issue Category')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      // ==== Firebase Cloud Storage upload logic here ====
+      
+      await FirebaseFirestore.instance.collection('reports').add({
+        'userId': user?.uid ?? 'anonymous',
+        'category': _selectedCategory,
+        'description': _descriptionController.text.trim(),
+        'location': '49.7128° N, 74.0060° W', // Hardcoded for now
+        'status': 'SUBMITTED',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report submitted successfully!')),
+        );
+        setState(() {
+          _selectedCategory = null;
+          _image = null;
+        });
+        _descriptionController.clear();
+        
+        _onTabTapped(2); 
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit report: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -136,34 +238,79 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 10),
 
                     // Photo upload area
-                    Container(
-                      width: double.infinity,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: _cardBg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: _inputBorder,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    Center(
+                      child: Stack(
                         children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 36,
-                            color: _subText.withValues(alpha: 0.7),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Tap to take photo',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _subText,
-                              fontWeight: FontWeight.w500,
+                          GestureDetector(
+                            onTap: _takePhoto, 
+                            child: Container(
+                              width: double.infinity,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                color: _cardBg,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _inputBorder,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: _image == null
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.camera_alt_outlined, 
+                                          size: 36,
+                                          color: _subText.withValues(alpha: 0.7),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'Tap to take photo',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _subText,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: kIsWeb 
+                                          ? Image.network(
+                                              _image!.path, 
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            )
+                                          : Image.file(
+                                              File(_image!.path), 
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            ),
+                                    ),
                             ),
                           ),
+                          // Remove photo button (only shows if an image exists)
+                          if (_image != null)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _image = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -224,22 +371,41 @@ class _ReportScreenState extends State<ReportScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: _cardBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _inputBorder, width: 1),
-                      ),
-                      child: TextField(
-                        controller: _categoryController,
-                        style: TextStyle(color: _textColor, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: '',
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                    
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCategory,
+                      dropdownColor: _cardBg,
+                      icon: Icon(Icons.keyboard_arrow_down, color: _subText),
+                      style: TextStyle(color: _textColor, fontSize: 14),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: _cardBg,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: _inputBorder, width: 1),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: _inputBorder, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: _primary, width: 1.5),
                         ),
                       ),
+                      hint: Text('Select a category', style: TextStyle(color: _subText, fontSize: 14)),
+                      items: _categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedCategory = val;
+                        });
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -288,17 +454,26 @@ class _ReportScreenState extends State<ReportScreen> {
                           ),
                           elevation: 0,
                         ),
-                        onPressed: () {},
-                        child: Text(
-                          'Submit Report',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        onPressed: _isLoading ? null : _submitReport,
+                        child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Report',
+                                  style: TextStyle(
+                                    color: widget.isDark ? Colors.black : Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
-                    ),
 
                     const SizedBox(height: 24),
                   ],
