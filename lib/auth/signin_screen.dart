@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import '../reports/map_feed_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   final bool isDark;
@@ -38,6 +39,15 @@ class _SignInScreenState extends State<SignInScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MapFeedScreen(
+              isDark: widget.isDark,
+              onToggle: widget.onToggle,
+            ),
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {
