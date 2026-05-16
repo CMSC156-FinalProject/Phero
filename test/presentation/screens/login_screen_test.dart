@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:phero_app/presentation/screens/login_screen.dart';
+import 'package:phero_app/auth/login_screen.dart';
 import 'package:phero_app/main.dart';
 
 void main() {
