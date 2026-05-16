@@ -30,6 +30,7 @@ lib/
 │   ├── constants.dart
 │   ├── services.dart
 │   ├── helpers.dart
+│   │
 │   └── widgets/
 │       ├── custom_button.dart
 │       ├── custom_textfield.dart
@@ -38,12 +39,57 @@ lib/
 │       └── bottom_navbar.dart
 │
 ├── features/
+│
 │   ├── splash/
+│   │   └── splash_screen.dart
+│   │
 │   ├── auth/
+│   │   ├── auth_controller.dart
+│   │   ├── auth_repository.dart
+│   │   ├── login_screen.dart
+│   │   ├── signup_screen.dart
+│   │   ├── admin_login_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── auth_form.dart
+│   │       └── auth_header.dart
+│   │
 │   ├── dashboard/
+│   │   ├── home_screen.dart
+│   │   ├── admin_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── dashboard_card.dart
+│   │       └── quick_action_button.dart
+│   │
 │   ├── reports/
+│   │   ├── reports_controller.dart
+│   │   ├── reports_repository.dart
+│   │   ├── report_screen.dart
+│   │   ├── my_reports_screen.dart
+│   │   ├── map_feed_screen.dart
+│   │   ├── manage_reports_screen.dart
+│   │   ├── reports_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       ├── report_card.dart
+│   │       ├── report_form.dart
+│   │       ├── report_map.dart
+│   │       └── status_badge.dart
+│   │
 │   ├── emergency/
+│   │   ├── emergency_controller.dart
+│   │   ├── emergency_screen.dart
+│   │   ├── emergency_dashboard_screen.dart
+│   │   │
+│   │   └── widgets/
+│   │       └── emergency_button.dart
+│   │
 │   └── settings/
+│       ├── settings_screen.dart
+│       │
+│       └── widgets/
+│           └── theme_toggle.dart
 │
 └── test/
 ```
