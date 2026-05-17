@@ -6,7 +6,7 @@ import 'package:phero_app/main.dart';
 void main() {
   Widget createWidgetForTesting( { bool isDark = false, VoidCallback? onToggle } ) {
     return MaterialApp(
-      home: LoginScreen(isDark: isDark, onToggle: onToggle ?? () {},),
+      home: LoginScreen(),
     );
   }
   
