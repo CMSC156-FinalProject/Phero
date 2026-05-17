@@ -251,10 +251,10 @@ class _ReportScreenState extends State<ReportScreen> {
                               width: double.infinity,
                               height: 160,
                               decoration: BoxDecoration(
-                                color: _cardBg,
+                                color: cardBg,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: _inputBorder,
+                                  color: inputBorder,
                                   width: 1.5,
                                 ),
                               ),
@@ -265,14 +265,14 @@ class _ReportScreenState extends State<ReportScreen> {
                                         Icon(
                                           Icons.camera_alt_outlined, 
                                           size: 36,
-                                          color: _subText.withValues(alpha: 0.7),
+                                          color: subText.withValues(alpha: 0.7),
                                         ),
                                         const SizedBox(height: 10),
                                         Text(
                                           'Tap to take photo',
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: _subText,
+                                            color: subText,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -378,27 +378,27 @@ class _ReportScreenState extends State<ReportScreen> {
                     
                     DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
-                      dropdownColor: _cardBg,
-                      icon: Icon(Icons.keyboard_arrow_down, color: _subText),
-                      style: TextStyle(color: _textColor, fontSize: 14),
+                      dropdownColor: cardBg,
+                      icon: Icon(Icons.keyboard_arrow_down, color: subText),
+                      style: TextStyle(color: textColor, fontSize: 14),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: _cardBg,
+                        fillColor: cardBg,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _inputBorder, width: 1),
+                          borderSide: BorderSide(color: inputBorder, width: 1),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _inputBorder, width: 1),
+                          borderSide: BorderSide(color: inputBorder, width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _primary, width: 1.5),
+                          borderSide: BorderSide(color: primary, width: 1.5),
                         ),
                       ),
-                      hint: Text('Select a category', style: TextStyle(color: _subText, fontSize: 14)),
+                      hint: Text('Select a category', style: TextStyle(color: subText, fontSize: 14)),
                       items: _categories.map((category) {
                         return DropdownMenuItem(
                           value: category,
@@ -471,7 +471,7 @@ class _ReportScreenState extends State<ReportScreen> {
                               : Text(
                                   'Submit Report',
                                   style: TextStyle(
-                                    color: widget.isDark ? Colors.black : Colors.white,
+                                    color: isDark ? Colors.black : Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
