@@ -1,17 +1,18 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
+import '../emergency/emergency_screen.dart';
+import '../settings/account_settings_screen.dart';
+import '../core/theme/theme_notifier.dart';
 
 class ReportScreen extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onToggle;
-
-  const ReportScreen({super.key, required this.isDark, required this.onToggle});
+  const ReportScreen({super.key});
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();
@@ -39,28 +40,22 @@ class _ReportScreenState extends State<ReportScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   late bool _isLoading = false;
 
-  Color get _primary => widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-  Color get _bg => widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
-  Color get _cardBg => widget.isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
-  Color get _textColor => widget.isDark ? Colors.white : const Color(0xFF2C3A1E);
-  Color get _subText => widget.isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
-  Color get _inputBorder => widget.isDark ? const Color(0xFF1E3040) : const Color(0xFFE0E8D8);
-
   void _onTabTapped(int index) {
     if (index == 1) return;
     if (index == 0) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => MapFeedScreen(isDark: widget.isDark, onToggle: widget.onToggle),
-        ),
+        MaterialPageRoute(builder: (_) => const MapFeedScreen()),
       );
     } else if (index == 2) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => MyReportsScreen(isDark: widget.isDark, onToggle: widget.onToggle),
-        ),
+        MaterialPageRoute(builder: (_) => const MyReportsScreen()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const EmergencyScreen()),
       );
     }
   }
@@ -146,8 +141,17 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeNotifier>().isDark;
+
+    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
+    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
+    final textColor = isDark ? Colors.white : const Color(0xFF2C3A1E);
+    final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+    final inputBorder = isDark ? const Color(0xFF1E3040) : const Color(0xFFE0E8D8);
+
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -162,28 +166,28 @@ class _ReportScreenState extends State<ReportScreen> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: _primary,
+                      color: primary,
                       letterSpacing: 0.5,
                     ),
                   ),
                   GestureDetector(
-                    onTap: widget.onToggle,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AccountSettingsScreen(),
+                      ),
+                    ),
                     child: Container(
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: _primary,
+                        color: primary,
                         shape: BoxShape.circle,
                       ),
-                      child: Center(
-                        child: Text(
-                          'US',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.black : Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      child: Icon(
+                        Icons.person,
+                        color: isDark ? Colors.black : Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -206,7 +210,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: _textColor,
+                          color: textColor,
                         ),
                       ),
                     ),
@@ -214,7 +218,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     Center(
                       child: Text(
                         'Help fix your neighborhood today.',
-                        style: TextStyle(fontSize: 13, color: _subText),
+                        style: TextStyle(fontSize: 13, color: subText),
                       ),
                     ),
 
@@ -223,13 +227,13 @@ class _ReportScreenState extends State<ReportScreen> {
                     // Evidence Photo Label
                     Row(
                       children: [
-                        Icon(Icons.camera_alt_outlined, size: 16, color: _subText),
+                        Icon(Icons.camera_alt_outlined, size: 16, color: subText),
                         const SizedBox(width: 6),
                         Text(
                           'Evidence Photo',
                           style: TextStyle(
                             fontSize: 13,
-                            color: _subText,
+                            color: subText,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -321,18 +325,18 @@ class _ReportScreenState extends State<ReportScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       decoration: BoxDecoration(
-                        color: widget.isDark
+                        color: isDark
                             ? const Color(0xFF1A3020)
                             : const Color(0xFFEDF4E8),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _primary.withValues(alpha: 0.3),
+                          color: primary.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.location_on_outlined, size: 18, color: _primary),
+                          Icon(Icons.location_on_outlined, size: 18, color: primary),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +346,7 @@ class _ReportScreenState extends State<ReportScreen> {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: _primary,
+                                  color: primary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -350,7 +354,7 @@ class _ReportScreenState extends State<ReportScreen> {
                                 '49.7128° N, 74.0060° W',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: _subText,
+                                  color: subText,
                                 ),
                               ),
                             ],
@@ -366,7 +370,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       'Issue Category',
                       style: TextStyle(
                         fontSize: 13,
-                        color: widget.isDark ? const Color(0xFF2ECC71) : _textColor,
+                        color: isDark ? const Color(0xFF2ECC71) : textColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -415,24 +419,24 @@ class _ReportScreenState extends State<ReportScreen> {
                       'Description (Optional)',
                       style: TextStyle(
                         fontSize: 13,
-                        color: widget.isDark ? const Color(0xFF2ECC71) : _textColor,
+                        color: isDark ? const Color(0xFF2ECC71) : textColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: _cardBg,
+                        color: cardBg,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _inputBorder, width: 1),
+                        border: Border.all(color: inputBorder, width: 1),
                       ),
                       child: TextField(
                         controller: _descriptionController,
                         maxLines: 4,
-                        style: TextStyle(color: _textColor, fontSize: 14),
+                        style: TextStyle(color: textColor, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Provide any helpful details...',
-                          hintStyle: TextStyle(color: _subText, fontSize: 13),
+                          hintStyle: TextStyle(color: subText, fontSize: 13),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
@@ -448,7 +452,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       height: 52,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -483,16 +487,16 @@ class _ReportScreenState extends State<ReportScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(isDark, primary, subText, bg),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(bool isDark, Color primary, Color subText, Color bg) {
     return Container(
       decoration: BoxDecoration(
-        color: _bg,
+        color: bg,
         border: Border(
-          top: BorderSide(color: _subText.withValues(alpha: 0.15), width: 1),
+          top: BorderSide(color: subText.withValues(alpha: 0.15), width: 1),
         ),
       ),
       child: SafeArea(
@@ -502,10 +506,10 @@ class _ReportScreenState extends State<ReportScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.map_outlined, 'Map Feed', 0),
-              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1),
-              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2),
-              _buildNavItem(Icons.phone_outlined, 'Emergency', 3),
+              _buildNavItem(Icons.map_outlined, 'Map Feed', 0, primary, subText),
+              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1, primary, subText),
+              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2, primary, subText),
+              _buildNavItem(Icons.phone_outlined, 'Emergency', 3, primary, subText),
             ],
           ),
         ),
@@ -513,9 +517,9 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, String label, int index, Color primary, Color subText) {
     final isActive = index == 1;
-    final color = isActive ? _primary : _subText;
+    final color = isActive ? primary : subText;
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       child: Column(

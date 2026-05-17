@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'login_screen.dart';
 import '../reports/map_feed_screen.dart';
+import '../core/theme/theme_notifier.dart';
 
 class SignInScreen extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onToggle;
-
-  const SignInScreen({super.key, required this.isDark, required this.onToggle});
+  const SignInScreen({super.key});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -17,7 +16,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  
+
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _isLoading = false;
@@ -42,12 +41,7 @@ class _SignInScreenState extends State<SignInScreen> {
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => MapFeedScreen(
-              isDark: widget.isDark,
-              onToggle: widget.onToggle,
-            ),
-          ),
+          MaterialPageRoute(builder: (context) => const MapFeedScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -71,10 +65,11 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final primary = widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-    final textColor = widget.isDark ? Colors.white : const Color(0xFF3B4A2F);
-    final fieldColor = widget.isDark ? const Color(0xFF1A2E1A) : const Color(0xFFEAEFE4);
+    final isDark = context.watch<ThemeNotifier>().isDark;
+    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
+    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
+    final textColor = isDark ? Colors.white : const Color(0xFF3B4A2F);
+    final fieldColor = isDark ? const Color(0xFF1A2E1A) : const Color(0xFFEAEFE4);
 
     return Scaffold(
       backgroundColor: bg,
@@ -88,7 +83,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      widget.isDark
+                      isDark
                           ? 'assets/images/logo_head_dark.png'
                           : 'assets/images/logo_head_light.png',
                       width: 60,
@@ -107,7 +102,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     Divider(color: primary, thickness: 2, indent: 120, endIndent: 120),
                     const SizedBox(height: 32),
 
-                    // Email field
                     _buildField(
                       hint: 'Email',
                       icon: Icons.person_outline,
@@ -117,7 +111,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password field
                     _buildField(
                       hint: 'Password',
                       icon: Icons.visibility_off_outlined,
@@ -129,7 +122,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Confirm Password field
                     _buildField(
                       hint: 'Confirm Password',
                       icon: Icons.visibility_off_outlined,
@@ -141,7 +133,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Sign In button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -158,7 +149,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             : Text(
                                 'sign in',
                                 style: TextStyle(
-                                  color: widget.isDark ? Colors.black : Colors.white,
+                                  color: isDark ? Colors.black : Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -167,7 +158,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Already have account
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -178,10 +168,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => LoginScreen(
-                                  isDark: widget.isDark,
-                                  onToggle: widget.onToggle,
-                                ),
+                                builder: (_) => const LoginScreen(),
                               ),
                             );
                           },
