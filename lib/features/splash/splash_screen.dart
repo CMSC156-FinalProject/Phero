@@ -1,12 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../auth/login_screen.dart'; //final destination after splash
+import 'package:provider/provider.dart';
+import '../../auth/login_screen.dart';
+import '../../core/theme/theme_notifier.dart';
 
 class SplashScreen extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onToggle;
-
-  const SplashScreen({super.key, required this.isDark, required this.onToggle});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -17,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _logoScale;
   late Animation<double> _logoFade;
-  late Animation<double> _greenRadius; // radius in 0.0–1.0 of full coverage
+  late Animation<double> _greenRadius;
 
   bool _tapped = false;
 
@@ -44,7 +43,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Goes from 0 → 1 where 1 = fully covers screen
     _greenRadius = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -58,10 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, _, _) => LoginScreen(
-              isDark: widget.isDark,
-              onToggle: widget.onToggle,
-            ),
+            pageBuilder: (_, _, _) => const LoginScreen(),
             transitionDuration: Duration.zero,
           ),
         );
@@ -83,10 +78,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final green = widget.isDark
-        ? const Color(0xFF2ECC71)
-        : const Color(0xFF3B4A2F);
+    final isDark = context.watch<ThemeNotifier>().isDark;
+    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
+    final green = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
 
     return GestureDetector(
       onTap: _onTap,
@@ -98,7 +92,6 @@ class _SplashScreenState extends State<SplashScreen>
             return Stack(
               clipBehavior: Clip.hardEdge,
               children: [
-                // ── Decorative top-left logo ──────────────────────────────
                 if (_logoFade.value > 0)
                   Positioned(
                     top: -200,
@@ -108,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Transform.rotate(
                         angle: 0.8,
                         child: Image.asset(
-                          widget.isDark
+                          isDark
                               ? 'assets/images/logo_head_dark.png'
                               : 'assets/images/logo_head_light.png',
                           width: 500,
@@ -117,7 +110,6 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                // ── Decorative bottom-right logo ──────────────────────────
                 if (_logoFade.value > 0)
                   Positioned(
                     bottom: -180,
@@ -127,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Transform.rotate(
                         angle: -0.8,
                         child: Image.asset(
-                          widget.isDark
+                          isDark
                               ? 'assets/images/logo_head_dark.png'
                               : 'assets/images/logo_head_light.png',
                           width: 500,
@@ -136,7 +128,6 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                // ── Green flood — CustomPainter draws circle that fills screen ──
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _GreenFloodPainter(
@@ -146,7 +137,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
 
-                // ── Center logo — zooms toward user ───────────────────────
                 if (_logoFade.value > 0)
                   Center(
                     child: Opacity(
@@ -154,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Transform.scale(
                         scale: _logoScale.value,
                         child: Image.asset(
-                          widget.isDark
+                          isDark
                               ? 'assets/images/logo_phero_dark.png'
                               : 'assets/images/logo_phero_light.png',
                           width: 230,
@@ -163,21 +153,18 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                // ── Moon / Sun toggle — always on top ─────────────────────
                 Positioned(
                   top: 15,
                   right: 15,
                   child: IconButton(
                     icon: Icon(
-                      widget.isDark
-                          ? Icons.wb_sunny
-                          : Icons.nightlight_round,
-                      color: widget.isDark
+                      isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                      color: isDark
                           ? const Color(0xFF2ECC71)
                           : const Color(0xFF5C6E3E),
                       size: 28,
                     ),
-                    onPressed: widget.onToggle,
+                    onPressed: () => context.read<ThemeNotifier>().toggle(),
                   ),
                 ),
               ],
@@ -189,9 +176,8 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// Draws a circle from the center that grows to cover the entire canvas
 class _GreenFloodPainter extends CustomPainter {
-  final double progress; // 0.0 → 1.0
+  final double progress;
   final Color color;
 
   _GreenFloodPainter({required this.progress, required this.color});
@@ -199,13 +185,10 @@ class _GreenFloodPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0) return;
-
     final center = Offset(size.width / 2, size.height / 2);
-    // Max radius = distance from center to farthest corner
     final maxRadius = sqrt(
       pow(size.width / 2, 2) + pow(size.height / 2, 2),
-    ) * 1.05; // tiny extra to eliminate edge gap
-
+    ) * 1.05;
     final paint = Paint()..color = color;
     canvas.drawCircle(center, maxRadius * progress, paint);
   }
