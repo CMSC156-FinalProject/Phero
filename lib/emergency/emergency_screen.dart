@@ -25,9 +25,9 @@ class EmergencyScreen extends StatelessWidget {
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == 3) return;
-    if (index == 0) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MapFeedScreen()));
-    else if (index == 1) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportScreen()));
-    else if (index == 2) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyReportsScreen()));
+    if (index == 0) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MapFeedScreen()));}
+    else if (index == 1) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportScreen()));}
+    else if (index == 2) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyReportsScreen()));}
   }
 
   @override
