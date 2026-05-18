@@ -9,6 +9,7 @@ import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -487,55 +488,7 @@ class _ReportScreenState extends State<ReportScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(isDark, primary, subText, bg),
-    );
-  }
-
-  Widget _buildBottomNav(bool isDark, Color primary, Color subText, Color bg) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(
-          top: BorderSide(color: subText.withValues(alpha: 0.15), width: 1),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.map_outlined, 'Map Feed', 0, primary, subText),
-              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1, primary, subText),
-              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2, primary, subText),
-              _buildNavItem(Icons.phone_outlined, 'Emergency', 3, primary, subText),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index, Color primary, Color subText) {
-    final isActive = index == 1;
-    final color = isActive ? primary : subText;
-    return GestureDetector(
-      onTap: () => _onTabTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal),
-          ),
-        ],
-      ),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 1),
     );
   }
 }

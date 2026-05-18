@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'map_feed_screen.dart';
 import 'report_screen.dart';
+import 'report_details_screen.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
 
 class MyReportsScreen extends StatefulWidget {
@@ -27,8 +29,14 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     switch (status) {
       case 'IN PROGRESS': return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
       case 'RESOLVED': return const Color(0xFF5AAA6A);
-      default: return const Color(0xFFE6A817);
+      default: return const Color(0xFFF55858);
     }
+  }
+
+  Color _getFilterColor(String filter, bool isDark, Color primary) {
+    if (filter == 'All') return primary;
+
+    return _statusColor(filter.toUpperCase(), isDark);
   }
 
   IconData _statusIcon(String status) {
@@ -128,15 +136,17 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 itemBuilder: (context, index) {
                   final filter = _filters[index];
                   final isActive = _selectedFilter == filter;
+                  final activeColor = _getFilterColor(filter, isDark, primary);   // Get the appropriate color for submitted, in progress, resolved, or all
+
                   return GestureDetector(
                     onTap: () => setState(() => _selectedFilter = filter),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isActive ? primary : Colors.transparent,
+                        color: isActive ? activeColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: isActive ? primary : subText.withValues(alpha: 0.4), width: 1.5),
+                        border: Border.all(color: isActive ? activeColor : subText.withValues(alpha: 0.4), width: 1.5),
                       ),
                       child: Text(filter, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isActive ? (isDark ? Colors.black : Colors.white) : subText)),
                     ),
@@ -157,7 +167,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(isDark, bg, primary, subText),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 2),
     );
   }
 
@@ -165,110 +175,87 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     final statusColor = _statusColor(report['status'], isDark);
     final statusIcon = _statusIcon(report['status']);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), bottomLeft: Radius.circular(14)),
-            child: Container(
-              width: 80, height: 85,
-              color: (report['imagePlaceholder'] as Color).withValues(alpha: isDark ? 0.5 : 0.3),
-              child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
+    return GestureDetector(
+      onTap: () {
+        // Navigate to report details page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportDetailsScreen(
+              report: report,
+              isDark: isDark,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(report['title'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor)),
-                      Padding(padding: const EdgeInsets.only(right: 12), child: Text(report['id'], style: TextStyle(fontSize: 10, color: subText))),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(report['address'], style: TextStyle(fontSize: 12, color: subText)),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(children: [
-                        Icon(Icons.calendar_today_outlined, size: 11, color: subText),
-                        const SizedBox(width: 4),
-                        Text(report['date'], style: TextStyle(fontSize: 11, color: subText)),
-                      ]),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(statusIcon, size: 11, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(report['status'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), bottomLeft: Radius.circular(14)),
+              child: Container(
+                width: 80, height: 85,
+                color: (report['imagePlaceholder'] as Color).withValues(alpha: isDark ? 0.5 : 0.3),
+                child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(bool isDark, Color bg, Color primary, Color subText) {
-    return Container(
-      decoration: BoxDecoration(color: bg, border: Border(top: BorderSide(color: subText.withValues(alpha: 0.15), width: 1))),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.map_outlined, 'Map Feed', 0, primary, subText),
-              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1, primary, subText),
-              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2, primary, subText),
-              _buildNavItem(Icons.phone_outlined, 'Emergency', 3, primary, subText),
-            ],
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(report['title'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor)),
+                        Padding(padding: const EdgeInsets.only(right: 12), child: Text(report['id'], style: TextStyle(fontSize: 10, color: subText))),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(report['address'], style: TextStyle(fontSize: 12, color: subText)),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.calendar_today_outlined, size: 11, color: subText),
+                          const SizedBox(width: 4),
+                          Text(report['date'], style: TextStyle(fontSize: 11, color: subText)),
+                        ]),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(statusIcon, size: 11, color: statusColor),
+                                const SizedBox(width: 4),
+                                Text(report['status'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index, Color primary, Color subText) {
-    final isActive = index == 2;
-    final color = isActive ? primary : subText;
-    return GestureDetector(
-      onTap: () => _onTabTapped(index, context.read<ThemeNotifier>().isDark),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 3),
-          Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
-        ],
       ),
     );
   }
