@@ -4,6 +4,7 @@ import 'report_screen.dart';
 import 'my_reports_screen.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
 
 class MapFeedScreen extends StatefulWidget {
@@ -123,7 +124,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(bg, primary, subText),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
     );
   }
 
