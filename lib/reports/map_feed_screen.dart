@@ -6,6 +6,9 @@ import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
 import '../presentation/viewmodels/report_viewmodel.dart';
 import '../domain/models/report.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../domain/repositories/location_service.dart';
 
 class MapFeedScreen extends StatefulWidget {
   const MapFeedScreen({super.key});
@@ -16,13 +19,31 @@ class MapFeedScreen extends StatefulWidget {
 
 class _MapFeedScreenState extends State<MapFeedScreen> {
   bool _isListView = true;
+  double? _userLatitude;
+  double? _userLongitude;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReportViewModel>().loadReports();
+      _fetchUserLocation();
     });
+  }
+
+  Future<void> _fetchUserLocation() async {
+    try {
+      final service = context.read<LocationService>();
+      final location = await service.getCurrentLocation();
+      if (location != null) {
+        setState(() {
+          _userLatitude = location.latitude;
+          _userLongitude = location.longitude;
+        });
+      }
+    } catch (e) {
+      // Graceful error handling
+    }
   }
 
   Color _statusColor(String status, bool isDark) {
@@ -108,15 +129,63 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : reports.isEmpty
                       ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: reports.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final report = reports[index];
-                            return _buildIssueCard(report, isDark, cardBg, textColor, subText);
-                          },
-                        ),
+                      : _isListView
+                          ? ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: reports.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final report = reports[index];
+                                return _buildIssueCard(report, isDark, cardBg, textColor, subText);
+                              },
+                            )
+                          : ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(24),
+                                topRight: Radius.circular(24),
+                              ),
+                              child: FlutterMap(
+                                options: MapOptions(
+                                  initialCenter: _userLatitude != null && _userLongitude != null
+                                      ? LatLng(_userLatitude!, _userLongitude!)
+                                      : const LatLng(14.5995, 120.9842),
+                                  initialZoom: 14.0,
+                                ),
+                                children: [
+                                  TileLayer(
+                                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    userAgentPackageName: 'com.phero.app',
+                                  ),
+                                  MarkerLayer(
+                                    markers: reports.map((report) {
+                                      return Marker(
+                                        point: LatLng(report.latitude, report.longitude),
+                                        width: 40,
+                                        height: 40,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => ReportDetailsScreen(
+                                                  report: report,
+                                                  isDark: isDark,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.location_on,
+                                            size: 36,
+                                            color: _statusColor(report.status, isDark),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
             ),
           ],
         ),
