@@ -28,6 +28,7 @@ class SubmitNewReportUseCase {
     required String title,
     required String description,
     bool capturePhoto = false,
+    String? localImagePath,
   }) async {
     // 1. Get current authenticated user
     final user = await _authRepository.getCurrentUser();
@@ -45,7 +46,9 @@ class SubmitNewReportUseCase {
 
     // 3. Optionally capture media and upload
     String? mediaUrl;
-    if (capturePhoto) {
+    if (localImagePath != null && localImagePath.isNotEmpty) {
+      mediaUrl = await _storageService.uploadReportImage(user.id, reportId, localImagePath);
+    } else if (capturePhoto) {
       final media = await _cameraService.takePicture();
       if (media != null) {
         mediaUrl = await _storageService.uploadReportImage(user.id, reportId, media.path);

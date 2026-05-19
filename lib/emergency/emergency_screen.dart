@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../settings/account_settings_screen.dart';
-import '../reports/map_feed_screen.dart';
-import '../reports/report_screen.dart';
-import '../reports/my_reports_screen.dart';
 import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
 
@@ -22,13 +19,6 @@ class EmergencyScreen extends StatelessWidget {
   Future<void> _call(String number) async {
     final uri = Uri(scheme: 'tel', path: number);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
-  void _onTabTapped(BuildContext context, int index) {
-    if (index == 3) return;
-    if (index == 0) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MapFeedScreen()));}
-    else if (index == 1) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportScreen()));}
-    else if (index == 2) {Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyReportsScreen()));}
   }
 
   @override

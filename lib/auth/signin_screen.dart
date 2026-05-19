@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'login_screen.dart';
 import '../reports/map_feed_screen.dart';
 import '../core/theme/theme_notifier.dart';
+import '../presentation/viewmodels/auth_viewmodel.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -19,23 +19,32 @@ class _SignInScreenState extends State<SignInScreen> {
 
   bool _showPassword = false;
   bool _showConfirmPassword = false;
-  bool _isLoading = false;
 
   Future<void> _register() async {
-    if (_passwordController.text != _confirmPasswordController.text) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      if (mounted) {
+    final authViewModel = context.read<AuthViewModel>();
+    final displayName = email.split('@')[0];
+    final success = await authViewModel.signUp(email, password, displayName);
+
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!')),
         );
@@ -43,15 +52,11 @@ class _SignInScreenState extends State<SignInScreen> {
           context,
           MaterialPageRoute(builder: (context) => const MapFeedScreen()),
         );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Registration failed')),
+          SnackBar(content: Text(authViewModel.errorMessage ?? 'Registration failed')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -143,8 +148,8 @@ class _SignInScreenState extends State<SignInScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: _isLoading ? null : _register,
-                        child: _isLoading
+                        onPressed: context.watch<AuthViewModel>().isLoading ? null : _register,
+                        child: context.watch<AuthViewModel>().isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : Text(
                                 'sign in',

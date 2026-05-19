@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../domain/models/report.dart';
+import '../presentation/viewmodels/auth_viewmodel.dart';
+import '../presentation/viewmodels/report_viewmodel.dart';
 
-class ReportDetailsScreen extends StatelessWidget {
-  final Map<String, dynamic> report;
+class ReportDetailsScreen extends StatefulWidget {
+  final Report report;
   final bool isDark;
 
   const ReportDetailsScreen({
@@ -10,21 +14,110 @@ class ReportDetailsScreen extends StatelessWidget {
     required this.isDark,
   });
 
+  @override
+  State<ReportDetailsScreen> createState() => _ReportDetailsScreenState();
+}
+
+class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   Color _statusColor(String status) {
-    switch (status) {
-      case 'IN PROGRESS': return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
+    switch (status.toUpperCase()) {
+      case 'IN PROGRESS': return widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
       case 'RESOLVED': return const Color(0xFF5AAA6A);
       default: return const Color(0xFFF55858);
     }
   }
 
+  void _showUpdateStatusDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Update Report Status'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ['SUBMITTED', 'IN PROGRESS', 'RESOLVED'].map((status) {
+              return ListTile(
+                title: Text(status),
+                trailing: widget.report.status.toUpperCase() == status
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final success = await context
+                      .read<ReportViewModel>()
+                      .updateReportStatus(widget.report.id, status);
+                  if (context.mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Status updated to $status')),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to update status')),
+                      );
+                    }
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Report'),
+          content: const Text('Are you sure you want to delete this report? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final success = await context
+                    .read<ReportViewModel>()
+                    .deleteReport(widget.report.id);
+                if (context.mounted) {
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Report deleted successfully')),
+                    );
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to delete report')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
-    final textColor = isDark ? Colors.white : const Color(0xFF2C3A1E);
-    final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+    final primary = widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
+    final bg = widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
+    final cardBg = widget.isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
+    final textColor = widget.isDark ? Colors.white : const Color(0xFF2C3A1E);
+    final subText = widget.isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+
+    final authViewModel = context.watch<AuthViewModel>();
+    final currentUser = authViewModel.currentUser;
+    final isAdmin = authViewModel.isAdmin;
 
     return Scaffold(
       backgroundColor: bg,
@@ -38,10 +131,21 @@ class ReportDetailsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.more_vert, color: textColor),
-            onPressed: () {},
-          ),
+          if (isAdmin || currentUser?.id == widget.report.userId)
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: textColor),
+              onSelected: (val) {
+                if (val == 'delete') {
+                  _showDeleteConfirmation(context);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete Report', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -50,13 +154,13 @@ class ReportDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeaderInfo(primary, textColor, subText),
-            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
             _buildDescription(primary, textColor, subText),
-            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
             _buildLocation(textColor),
-            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
             _buildAttachments(textColor),
-            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
             _buildTimeline(primary, textColor, subText),
           ],
         ),
@@ -68,34 +172,56 @@ class ReportDetailsScreen extends StatelessWidget {
           border: Border(top: BorderSide(color: subText.withValues(alpha: 0.2))),
         ),
         child: SafeArea(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            // TODO: Implement update status or comment functionality
-            onPressed: () {},
-            child: Text(
-              'Add Update or Comment',
-              style: TextStyle(
-                fontSize: 16, 
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.black : Colors.white,
-              ),
-            ),
-          ),
+          child: isAdmin
+              ? ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () => _showUpdateStatusDialog(context),
+                  child: Text(
+                    'Update Progress Status',
+                    style: TextStyle(
+                      fontSize: 16, 
+                      fontWeight: FontWeight.bold,
+                      color: widget.isDark ? Colors.black : Colors.white,
+                    ),
+                  ),
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.isDark ? const Color(0xFF132030) : Colors.grey[200],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: primary.withValues(alpha: 0.5)),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Back to Feed',
+                    style: TextStyle(
+                      fontSize: 16, 
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
         ),
       ),
     );
   }
 
   Widget _buildHeaderInfo(Color primary, Color textColor, Color subText) {
-    final status = report['status'] ?? 'SUBMITTED';
+    final status = widget.report.status;
     final sColor = _statusColor(status);
+    final dateStr = '${widget.report.timestamp.day}/${widget.report.timestamp.month}/${widget.report.timestamp.year}';
+    final shortId = widget.report.id.length > 8 ? 'REP-${widget.report.id.substring(0, 8).toUpperCase()}' : 'REP-${widget.report.id.toUpperCase()}';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -113,7 +239,7 @@ class ReportDetailsScreen extends StatelessWidget {
                   border: Border.all(color: sColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  status,
+                  status.toUpperCase(),
                   style: TextStyle(
                     color: sColor,
                     fontSize: 12,
@@ -122,14 +248,14 @@ class ReportDetailsScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                report['id'] ?? '#RPT-0000',
+                shortId,
                 style: TextStyle(color: subText, fontWeight: FontWeight.w600),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            report['title'] ?? 'Unknown Issue',
+            widget.report.title,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
           ),
           const SizedBox(height: 12),
@@ -137,7 +263,7 @@ class ReportDetailsScreen extends StatelessWidget {
             children: [
               Icon(Icons.calendar_today_outlined, size: 16, color: subText),
               const SizedBox(width: 8),
-              Text(report['date'] ?? 'Recently', style: TextStyle(color: subText, fontSize: 13)),
+              Text(dateStr, style: TextStyle(color: subText, fontSize: 13)),
             ],
           ),
           const SizedBox(height: 8),
@@ -148,7 +274,7 @@ class ReportDetailsScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  report['address'] ?? 'Unknown Location',
+                  '${widget.report.latitude.toStringAsFixed(4)}° N, ${widget.report.longitude.toStringAsFixed(4)}° W',
                   style: TextStyle(color: subText, fontSize: 13),
                 ),
               ),
@@ -177,7 +303,9 @@ class ReportDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Details regarding the ${report['title']?.toLowerCase()} reported at ${report['address']}. Lorem ipsum dolor sit amet consectetur adipiscing elit.',
+            widget.report.description.isNotEmpty
+                ? widget.report.description
+                : 'No details provided for this issue.',
             style: TextStyle(color: textColor.withValues(alpha: 0.8), height: 1.5),
           ),
         ],
@@ -192,20 +320,13 @@ class ReportDetailsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Location map',
+            'Location Coordinates',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
           ),
-          const SizedBox(height: 12),
-          Container(
-            height: 160,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: isDark ? const Color(0xFF1E3040) : Colors.grey[300],
-              image: const DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1619468129361-605ebea04b44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80'),
-                fit: BoxFit.cover,
-              ),
-            ),
+          const SizedBox(height: 8),
+          Text(
+            'Latitude: ${widget.report.latitude}\nLongitude: ${widget.report.longitude}',
+            style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 14, height: 1.4),
           ),
         ],
       ),
@@ -213,6 +334,7 @@ class ReportDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildAttachments(Color textColor) {
+    final mediaUrl = widget.report.mediaPath;
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -223,45 +345,54 @@ class ReportDetailsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1658223684971-f262da87168f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80',
-                    height: 120,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E3040) : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+          if (mediaUrl != null && mediaUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                mediaUrl,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    height: 200,
+                    color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 200,
+                  color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[200],
                   child: Center(
-                    child: Icon(Icons.broken_image_outlined, color: isDark ? Colors.white30 : Colors.black26),
+                    child: Icon(Icons.broken_image_outlined, color: widget.isDark ? Colors.white30 : Colors.black26, size: 40),
                   ),
                 ),
               ),
-            ],
-          ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text('No evidence photo attached.', style: TextStyle(color: textColor.withValues(alpha: 0.5))),
+              ),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildTimeline(Color primary, Color textColor, Color subText) {
-    // Dummy timeline data based on report status
+    final statusUpper = widget.report.status.toUpperCase();
     final timelineItems = [
-      {'title': 'Report Submitted', 'date': report['date'] ?? 'Recently', 'status': 'completed'},
-      {'title': 'Under Review', 'date': '', 'status': report['status'] == 'SUBMITTED' ? 'upcoming' : 'completed'},
-      {'title': 'In Progress', 'date': '', 'status': report['status'] == 'IN PROGRESS' ? 'current' : (report['status'] == 'RESOLVED' ? 'completed' : 'upcoming')},
-      {'title': 'Resolved', 'date': '', 'status': report['status'] == 'RESOLVED' ? 'completed' : 'upcoming'},
+      {'title': 'Report Submitted', 'date': '${widget.report.timestamp.day}/${widget.report.timestamp.month}/${widget.report.timestamp.year}', 'status': 'completed'},
+      {'title': 'Under Review', 'date': '', 'status': statusUpper == 'SUBMITTED' || statusUpper == 'PENDING' ? 'current' : 'completed'},
+      {'title': 'In Progress', 'date': '', 'status': statusUpper == 'IN PROGRESS' ? 'current' : (statusUpper == 'RESOLVED' ? 'completed' : 'upcoming')},
+      {'title': 'Resolved', 'date': '', 'status': statusUpper == 'RESOLVED' ? 'completed' : 'upcoming'},
     ];
 
     return Container(
@@ -330,7 +461,6 @@ class ReportDetailsScreen extends StatelessWidget {
     );
   }
 
-  // Helper function to get timeline icon based on status
   Widget _getTimelineIcon(String status, Color primary) {
     switch (status) {
       case 'completed':

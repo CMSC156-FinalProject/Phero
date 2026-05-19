@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'map_feed_screen.dart';
-import 'report_screen.dart';
 import 'report_details_screen.dart';
-import '../emergency/emergency_screen.dart';
 import '../settings/account_settings_screen.dart';
 import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
+import '../presentation/viewmodels/auth_viewmodel.dart';
+import '../presentation/viewmodels/report_viewmodel.dart';
+import '../domain/models/report.dart';
 
 class MyReportsScreen extends StatefulWidget {
   const MyReportsScreen({super.key});
@@ -19,14 +19,19 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Submitted', 'In Progress', 'Resolved'];
 
-  final List<Map<String, dynamic>> _reports = [
-    {'title': 'Pothole', 'id': 'REP-1049', 'address': 'Main St & 4th Ave', 'date': 'Oct 12, 2023', 'status': 'RESOLVED', 'imagePlaceholder': Colors.brown},
-    {'title': 'Broken Streetlight', 'id': 'REP-1050', 'address': 'Parkside Rd', 'date': 'Oct 14, 2023', 'status': 'IN PROGRESS', 'imagePlaceholder': Colors.blueGrey},
-    {'title': 'Graffiti', 'id': 'REP-1051', 'address': 'Community Center', 'date': 'Today, 9:42 AM', 'status': 'SUBMITTED', 'imagePlaceholder': Colors.grey},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = context.read<AuthViewModel>().currentUser;
+      if (user != null) {
+        context.read<ReportViewModel>().loadUserReports(user.id);
+      }
+    });
+  }
 
   Color _statusColor(String status, bool isDark) {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'IN PROGRESS': return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
       case 'RESOLVED': return const Color(0xFF5AAA6A);
       default: return const Color(0xFFF55858);
@@ -40,34 +45,24 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   IconData _statusIcon(String status) {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'IN PROGRESS': return Icons.sync;
       case 'RESOLVED': return Icons.check_circle_outline;
       default: return Icons.schedule;
     }
   }
 
-  List<Map<String, dynamic>> get _filteredReports {
-    if (_selectedFilter == 'All') return _reports;
-    return _reports.where((r) {
-      final status = r['status'] as String;
-      if (_selectedFilter == 'Submitted') return status == 'SUBMITTED';
+  List<Report> _filteredReports(List<Report> reports) {
+    if (_selectedFilter == 'All') return reports;
+    return reports.where((r) {
+      final status = r.status.toUpperCase();
+      if (_selectedFilter == 'Submitted') return status == 'SUBMITTED' || status == 'PENDING';
       if (_selectedFilter == 'In Progress') return status == 'IN PROGRESS';
       if (_selectedFilter == 'Resolved') return status == 'RESOLVED';
       return true;
     }).toList();
   }
 
-  void _onTabTapped(int index, bool isDark) {
-    if (index == 2) return;
-    if (index == 0) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MapFeedScreen()));
-    } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportScreen()));
-    } else if (index == 3) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const EmergencyScreen()));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +72,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     final cardBg = isDark ? const Color(0xFF132030) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF2C3A1E);
     final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+
+    final reportViewModel = context.watch<ReportViewModel>();
+    final reports = reportViewModel.userReports;
+    final filtered = _filteredReports(reports);
 
     return Scaffold(
       backgroundColor: bg,
@@ -111,7 +110,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                    child: Text('${_reports.length} Total', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
+                    child: Text('${reports.length} Total', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
                   ),
                 ],
               ),
@@ -136,7 +135,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 itemBuilder: (context, index) {
                   final filter = _filters[index];
                   final isActive = _selectedFilter == filter;
-                  final activeColor = _getFilterColor(filter, isDark, primary);   // Get the appropriate color for submitted, in progress, resolved, or all
+                  final activeColor = _getFilterColor(filter, isDark, primary);
 
                   return GestureDetector(
                     onTap: () => setState(() => _selectedFilter = filter),
@@ -157,12 +156,16 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             const SizedBox(height: 14),
 
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _filteredReports.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => _buildReportCard(_filteredReports[index], isDark, cardBg, textColor, subText),
-              ),
+              child: reportViewModel.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filtered.isEmpty
+                      ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) => _buildReportCard(filtered[index], isDark, cardBg, textColor, subText),
+                        ),
             ),
           ],
         ),
@@ -171,13 +174,14 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  Widget _buildReportCard(Map<String, dynamic> report, bool isDark, Color cardBg, Color textColor, Color subText) {
-    final statusColor = _statusColor(report['status'], isDark);
-    final statusIcon = _statusIcon(report['status']);
+  Widget _buildReportCard(Report report, bool isDark, Color cardBg, Color textColor, Color subText) {
+    final statusColor = _statusColor(report.status, isDark);
+    final statusIcon = _statusIcon(report.status);
+    final dateStr = '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}';
+    final shortId = report.id.length > 8 ? 'REP-${report.id.substring(0, 8).toUpperCase()}' : 'REP-${report.id.toUpperCase()}';
 
     return GestureDetector(
       onTap: () {
-        // Navigate to report details page
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -198,10 +202,21 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), bottomLeft: Radius.circular(14)),
-              child: Container(
+              child: SizedBox(
                 width: 80, height: 85,
-                color: (report['imagePlaceholder'] as Color).withValues(alpha: isDark ? 0.5 : 0.3),
-                child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
+                child: report.mediaPath != null && report.mediaPath!.isNotEmpty
+                    ? Image.network(
+                        report.mediaPath!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
+                        ),
+                      )
+                    : Container(
+                        color: Colors.blueGrey.withValues(alpha: isDark ? 0.5 : 0.3),
+                        child: Icon(Icons.image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -214,12 +229,24 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(report['title'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor)),
-                        Padding(padding: const EdgeInsets.only(right: 12), child: Text(report['id'], style: TextStyle(fontSize: 10, color: subText))),
+                        Expanded(
+                          child: Text(
+                            report.title,
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Text(shortId, style: TextStyle(fontSize: 10, color: subText)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(report['address'], style: TextStyle(fontSize: 12, color: subText)),
+                    Text(
+                      '${report.latitude.toStringAsFixed(4)}° N, ${report.longitude.toStringAsFixed(4)}° W',
+                      style: TextStyle(fontSize: 12, color: subText),
+                    ),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -227,7 +254,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                         Row(children: [
                           Icon(Icons.calendar_today_outlined, size: 11, color: subText),
                           const SizedBox(width: 4),
-                          Text(report['date'], style: TextStyle(fontSize: 11, color: subText)),
+                          Text(dateStr, style: TextStyle(fontSize: 11, color: subText)),
                         ]),
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
@@ -243,7 +270,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                               children: [
                                 Icon(statusIcon, size: 11, color: statusColor),
                                 const SizedBox(width: 4),
-                                Text(report['status'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
+                                Text(
+                                  report.status.toUpperCase(),
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
+                                ),
                               ],
                             ),
                           ),

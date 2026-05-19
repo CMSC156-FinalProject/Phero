@@ -14,6 +14,7 @@ class ReportViewModel extends ChangeNotifier {
   final DeleteReportUseCase _deleteReportUseCase;
 
   List<Report> _reports = [];
+  List<Report> _userReports = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -30,6 +31,7 @@ class ReportViewModel extends ChangeNotifier {
         _deleteReportUseCase = deleteReportUseCase;
 
   List<Report> get reports => _reports;
+  List<Report> get userReports => _userReports;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -55,6 +57,18 @@ class ReportViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> loadUserReports(String userId) async {
+    _setLoading(true);
+    try {
+      _userReports = await _fetchReportsUseCase.executeForUser(userId);
+      _setError(null);
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> loadNearbyReports(double latitude, double longitude, double radiusInKm) async {
     _setLoading(true);
     try {
@@ -71,13 +85,19 @@ class ReportViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> submitReport({required String title, required String description, bool capturePhoto = false}) async {
+  Future<bool> submitReport({
+    required String title,
+    required String description,
+    bool capturePhoto = false,
+    String? localImagePath,
+  }) async {
     _setLoading(true);
     try {
       await _submitNewReportUseCase.execute(
         title: title,
         description: description,
         capturePhoto: capturePhoto,
+        localImagePath: localImagePath,
       );
       _setError(null);
       // Reload reports to reflect the newly added one

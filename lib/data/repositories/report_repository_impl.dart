@@ -34,12 +34,15 @@ class ReportRepositoryImpl implements ReportRepository {
     final snapshot = await _firestore
         .collection('reports')
         .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
         .get();
 
-    return snapshot.docs
+    final reports = snapshot.docs
         .map((doc) => Report.fromJson(doc.data()))
         .toList();
+
+    // Sort in-memory to prevent missing composite index crashes in Firestore
+    reports.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return reports;
   }
 
   @override
