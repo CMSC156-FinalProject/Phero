@@ -21,6 +21,8 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
   bool _isListView = true;
   double? _userLatitude;
   double? _userLongitude;
+  final MapController _mapController = MapController();
+  bool _isMapCentered = false;
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     });
   }
 
-  Future<void> _fetchUserLocation() async {
+  Future<void> _fetchUserLocation({bool forceRecenter = false}) async {
     try {
       final service = context.read<LocationService>();
       final location = await service.getCurrentLocation();
@@ -40,6 +42,21 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           _userLatitude = location.latitude;
           _userLongitude = location.longitude;
         });
+
+        // 1. Fetch localized reports in the surrounding 10 km area via Clean Architecture backend
+        if (mounted) {
+          await context.read<ReportViewModel>().loadNearbyReports(
+            location.latitude,
+            location.longitude,
+            10.0,
+          );
+        }
+
+        // 2. Programmatically center the map viewport
+        if (!_isMapCentered || forceRecenter) {
+          _mapController.move(LatLng(location.latitude, location.longitude), 14.0);
+          _isMapCentered = true;
+        }
       }
     } catch (e) {
       // Graceful error handling
@@ -144,44 +161,64 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                                 topLeft: Radius.circular(24),
                                 topRight: Radius.circular(24),
                               ),
-                              child: FlutterMap(
-                                options: MapOptions(
-                                  initialCenter: _userLatitude != null && _userLongitude != null
-                                      ? LatLng(_userLatitude!, _userLongitude!)
-                                      : const LatLng(14.5995, 120.9842),
-                                  initialZoom: 14.0,
-                                ),
+                              child: Stack(
                                 children: [
-                                  TileLayer(
-                                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                    userAgentPackageName: 'com.phero.app',
-                                  ),
-                                  MarkerLayer(
-                                    markers: reports.map((report) {
-                                      return Marker(
-                                        point: LatLng(report.latitude, report.longitude),
-                                        width: 40,
-                                        height: 40,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => ReportDetailsScreen(
-                                                  report: report,
-                                                  isDark: isDark,
-                                                ),
+                                  FlutterMap(
+                                    mapController: _mapController,
+                                    options: MapOptions(
+                                      initialCenter: _userLatitude != null && _userLongitude != null
+                                          ? LatLng(_userLatitude!, _userLongitude!)
+                                          : const LatLng(14.5995, 120.9842),
+                                      initialZoom: 14.0,
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        userAgentPackageName: 'com.phero.app',
+                                      ),
+                                      MarkerLayer(
+                                        markers: reports.map((report) {
+                                          return Marker(
+                                            point: LatLng(report.latitude, report.longitude),
+                                            width: 40,
+                                            height: 40,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => ReportDetailsScreen(
+                                                      report: report,
+                                                      isDark: isDark,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.location_on,
+                                                size: 36,
+                                                color: _statusColor(report.status, isDark),
                                               ),
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.location_on,
-                                            size: 36,
-                                            color: _statusColor(report.status, isDark),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                  
+                                  // Recenter Location Float Button
+                                  Positioned(
+                                    bottom: 16,
+                                    right: 16,
+                                    child: FloatingActionButton(
+                                      mini: true,
+                                      backgroundColor: primary,
+                                      child: Icon(
+                                        Icons.my_location,
+                                        color: isDark ? Colors.black : Colors.white,
+                                      ),
+                                      onPressed: () => _fetchUserLocation(forceRecenter: true),
+                                    ),
                                   ),
                                 ],
                               ),
