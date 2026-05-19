@@ -122,6 +122,8 @@ class _ReportScreenState extends State<ReportScreen> {
       title: _selectedCategory!,
       description: _descriptionController.text.trim(),
       localImagePath: _image!.path,
+      latitude: _latitude,
+      longitude: _longitude,
     );
 
     if (mounted) {

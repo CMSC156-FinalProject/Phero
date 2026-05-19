@@ -90,6 +90,8 @@ class ReportViewModel extends ChangeNotifier {
     required String description,
     bool capturePhoto = false,
     String? localImagePath,
+    double? latitude,
+    double? longitude,
   }) async {
     _setLoading(true);
     try {
@@ -98,6 +100,8 @@ class ReportViewModel extends ChangeNotifier {
         description: description,
         capturePhoto: capturePhoto,
         localImagePath: localImagePath,
+        latitude: latitude,
+        longitude: longitude,
       );
       _setError(null);
       // Reload reports to reflect the newly added one
