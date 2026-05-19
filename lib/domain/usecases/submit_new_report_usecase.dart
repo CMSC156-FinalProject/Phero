@@ -22,13 +22,13 @@ class SubmitNewReportUseCase {
     this._storageService,
   );
 
-  /// Executes the use case to submit a new report.
-  /// Optionally takes a boolean to capture a photo during submission.
   Future<void> execute({
     required String title,
     required String description,
     bool capturePhoto = false,
     String? localImagePath,
+    double? latitude,
+    double? longitude,
   }) async {
     // 1. Get current authenticated user
     final user = await _authRepository.getCurrentUser();
@@ -37,9 +37,18 @@ class SubmitNewReportUseCase {
     }
 
     // 2. Get current location
-    final location = await _locationService.getCurrentLocation();
-    if (location == null) {
-      throw Exception('Could not determine current location. Please ensure location services are enabled.');
+    double lat;
+    double lon;
+    if (latitude != null && longitude != null) {
+      lat = latitude;
+      lon = longitude;
+    } else {
+      final location = await _locationService.getCurrentLocation();
+      if (location == null) {
+        throw Exception('Could not determine current location. Please ensure location services are enabled.');
+      }
+      lat = location.latitude;
+      lon = location.longitude;
     }
 
     final reportId = _uuid.v4();
@@ -62,8 +71,8 @@ class SubmitNewReportUseCase {
       description: description,
       userId: user.id,
       timestamp: DateTime.now(),
-      latitude: location.latitude,
-      longitude: location.longitude,
+      latitude: lat,
+      longitude: lon,
       mediaPath: mediaUrl,
       status: 'pending',
     );
