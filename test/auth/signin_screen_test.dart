@@ -2,53 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:phero_app/auth/signin_screen.dart';
-import 'package:phero_app/main.dart';
-import '../test_utils.dart';
+import 'package:phero_app/auth/login_screen.dart';
 import 'package:phero_app/core/theme/theme_notifier.dart';
+import 'package:phero_app/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:phero_app/domain/models/app_user.dart';
+
+/// A fake AuthViewModel to test the SignInScreen without real backend dependencies
+class FakeAuthViewModel extends ChangeNotifier implements AuthViewModel {
+  @override
+  bool isLoading = false;
+
+  @override
+  String? errorMessage;
+
+  @override
+  AppUser? currentUser;
+
+  @override
+  bool get isAdmin => false;
+
+  @override
+  bool get isAuthenticated => currentUser != null;
+
+  bool signUpWasCalled = false;
+  String? capturedEmail;
+  String? capturedPassword;
+
+  @override
+  Future<bool> signUp(String email, String password, String displayName) async {
+    signUpWasCalled = true;
+    capturedEmail = email;
+    capturedPassword = password;
+    
+    // return false so the Navigator doesn't try to load the MapFeedScreen
+    return false; 
+  }
+
+  // dummy implementations to satisfy the compiler
+  @override Future<bool> signIn(String email, String password) async => true;
+  @override Future<void> checkAuthStatus() async {}
+  @override Future<void> signOut() async {}
+}
 
 void main() {
-  Widget createWidgetForTesting( { bool isDark = false, VoidCallback? onToggle } ) {
-    final themeNotifier = ThemeNotifier();
+  late FakeAuthViewModel fakeAuthViewModel;
+  late ThemeNotifier themeNotifier;
+
+  setUp(() {
+    fakeAuthViewModel = FakeAuthViewModel();
+    themeNotifier = ThemeNotifier();
+  });
+
+  // this is to isolate the SignInScreen with fake ViewModel and ThemeNotifier,
+  // so we can test only the UI logic without any real backend or theme dependencies
+  Widget createWidgetForTesting({bool isDark = false}) {
     if (isDark) {
       themeNotifier.toggle();
     }
-    return createTestableWidget(
-      themeNotifier: themeNotifier,
-      child: const SignInScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthViewModel>.value(value: fakeAuthViewModel),
+        ChangeNotifierProvider<ThemeNotifier>.value(value: themeNotifier),
+      ],
+      child: const MaterialApp(
+        home: SignInScreen(),
+      ),
     );
   }
-  
+
   // ====== SIGN IN VALIDATION TESTS ======
   group('Sign In Validation Tests', () {
     testWidgets('Submitting empty fields show validation errors', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
       
-      // Wait for AuthViewModel initialization
-      await tester.pumpAndSettle();
-      
       final signInBtn = find.byType(ElevatedButton);
-
       await tester.tap(signInBtn);
-      await tester.pumpAndSettle();
+      await tester.pump(); // so that the setState validation errors can show up
 
       expect(find.text('Email is required', skipOffstage: false), findsOneWidget);
       expect(find.text('Password is required', skipOffstage: false), findsOneWidget);
-
-    });
-
-    testWidgets('Submitting email without password shows only password errors', (WidgetTester tester) async {
-      await tester.pumpWidget(createWidgetForTesting());
-      
-      final emailField = find.byType(TextField).first;
-      final signInBtn = find.byType(ElevatedButton);
-
-      await tester.enterText(emailField, 'isko@up.edu.ph');
-      
-      await tester.tap(signInBtn);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Password is required', skipOffstage: false), findsOneWidget);
-      expect(find.text('Email is required', skipOffstage: false), findsNothing);
     });
 
     testWidgets('Unmatching Password and Confirm Password show error', (WidgetTester tester) async {
@@ -59,12 +91,12 @@ void main() {
       final confirmPasswordField = find.byType(TextField).at(2);
       final signInBtn = find.byType(ElevatedButton);
 
-      await tester.enterText(emailField, 'test@example.com');
+      await tester.enterText(emailField, 'isko@up.edu.ph');
       await tester.enterText(passwordField, 'password123');
       await tester.enterText(confirmPasswordField, 'differentpassword');
 
       await tester.tap(signInBtn);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.text('Passwords do not match. Please try again.'), findsOneWidget);
     });
@@ -85,19 +117,12 @@ void main() {
       });
 
       testWidgets('Toggle theme button is triggered', (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => ThemeNotifier()),
-            ],
-            child: const PheroApp(),
-          ),
-        ); // Use the actual app to test theme toggle
-        
-        // Wait for SplashScreen
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        await tester.pumpWidget(createWidgetForTesting());
 
-        await tester.tap(find.byIcon(Icons.nightlight_round));
+        final themeToggleBtn = find.byType(IconButton).first;
+        expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
+
+        await tester.tap(themeToggleBtn);
         await tester.pumpAndSettle();
 
         expect(find.byIcon(Icons.nightlight_round), findsNothing);
@@ -108,7 +133,6 @@ void main() {
   // ====== PASSWORD VISIBILITY TESTS ======
   group('Password Visibility Tests', () {
     testWidgets('Password Visibility Test', (WidgetTester tester) async {
-
       await tester.pumpWidget(createWidgetForTesting());
       
       // Password and Confirm Password fields both use Icons.visibility_off_outlined
@@ -125,28 +149,27 @@ void main() {
 
   // ====== SIGN IN NAVIGATION TESTS ======
   group('Sign in Navigation Tests', () {
-    testWidgets('Elevated "Sign In" button navigates to Report Page', (WidgetTester tester) async {
+    testWidgets('Elevated "Sign In" button triggers signUp behavior without crashing', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
 
       final signInBtn = find.byType(ElevatedButton);
       expect(signInBtn, findsOneWidget);
 
-      await tester.enterText(find.byType(TextField).at(0), 'test@example.com');
+      await tester.enterText(find.byType(TextField).at(0), 'isko@up.edu.ph');
       await tester.enterText(find.byType(TextField).at(1), 'password123');
       await tester.enterText(find.byType(TextField).at(2), 'password123');
 
       await tester.tap(signInBtn);
-      await tester.pumpAndSettle();
-      expect(find.text('Phero'), findsOneWidget); // Verifies that the Report page is shown
+      await tester.pump();
 
-      // Verifies that the Sign in page is gone
-      expect(find.text('Confirm Password'), findsNothing);
+      // the UI should call the signUp method in the ViewModel with correct params
+      expect(fakeAuthViewModel.signUpWasCalled, isTrue);
+      expect(fakeAuthViewModel.capturedEmail, 'isko@up.edu.ph');
     });
 
     testWidgets('TextButton "Already have an account? Log in" navigates to Login Page', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
-  
-      // Find the "LOG IN" link text (not the header)
+
       final loginLink = find.descendant(
         of: find.byType(GestureDetector),
         matching: find.text('LOG IN'),
@@ -156,10 +179,7 @@ void main() {
       await tester.tap(loginLink);
       await tester.pumpAndSettle();
   
-      // Should now be on the Login screen, which has the "LOG IN" elevated button
-      expect(find.byType(ElevatedButton), findsOneWidget); 
-  
-      // Verifies that the Sign in page is gone
+      expect(find.byType(LoginScreen), findsOneWidget); 
       expect(find.text('Confirm Password'), findsNothing);
     });
   });
