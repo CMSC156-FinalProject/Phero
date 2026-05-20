@@ -72,22 +72,43 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           _mapController.move(LatLng(location.latitude, location.longitude), 14.0);
           _isMapCentered = true;
         }
+      } else {
+        if (forceRecenter && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to retrieve location. Please check settings/permissions.'),
+            ),
+          );
+        }
       }
     } catch (e) {
-      // Graceful error handling
+      if (forceRecenter && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error getting location: ${e.toString()}'),
+          ),
+        );
+      }
     }
   }
 
   Color _statusColor(String status, bool isDark) {
-    switch (status.toUpperCase()) {
-      case 'IN PROGRESS':
-        return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
-      case 'RESOLVED':
-        return const Color(0xFF7A9A6A);
-      default:
-        return isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E);
-    }
+  switch (status.toUpperCase()) {
+    case 'IN_PROGRESS':
+      return const Color(0xFF4169E1); // Blue
+
+    case 'RESOLVED':
+      return const Color(0xFF008000); // Green
+
+    case 'PENDING':
+      return const Color(0xFFFF0000); // Red
+
+    default:
+      return isDark
+          ? const Color(0xFFB0B0B0)
+          : const Color(0xFF808080); // Gray fallback
   }
+}
 
   /// Returns only reports whose coordinates fall within the current map viewport.
   /// Falls back to all reports when no bounds are known yet.

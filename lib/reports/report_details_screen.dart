@@ -21,7 +21,7 @@ class ReportDetailsScreen extends StatefulWidget {
 class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   Color _statusColor(String status, bool isDark) {
     switch (status.toUpperCase()) {
-      case 'IN PROGRESS': return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
+      case 'IN PROGRESS': return isDark ? const Color(0xFFF55858) : const Color(0xFF4A90D9);
       case 'RESOLVED': return const Color(0xFF5AAA6A);
       default: return const Color(0xFFF55858);
     }
