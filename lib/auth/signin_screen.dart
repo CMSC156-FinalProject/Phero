@@ -20,24 +20,32 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
 
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+
   Future<void> _register() async {
+    setState(() {
+      _emailError = _emailController.text.isEmpty ? 'Email is required' : null;
+      _passwordError = _passwordController.text.isEmpty
+          ? 'Password is required'
+          : (_passwordController.text.length < 6
+              ? 'Password must be at least 6 characters.'
+              : null);
+      _confirmPasswordError = null;
+    });
+
+    if (_emailError != null || _passwordError != null) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _confirmPasswordError = 'Passwords do not match. Please try again.';
+      });
+      return;
+    }
+
     final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
-      return;
-    }
-
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
-      return;
-    }
+    final password = _passwordController.text;
 
     final authViewModel = context.read<AuthViewModel>();
     final displayName = email.split('@')[0];
@@ -70,7 +78,8 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeNotifier>().isDark;
+    final themeNotifier = context.watch<ThemeNotifier>();
+    final isDark = themeNotifier.isDark;
     final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
     final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
     final textColor = isDark ? Colors.white : const Color(0xFF3B4A2F);
@@ -81,6 +90,17 @@ class _SignInScreenState extends State<SignInScreen> {
       body: SafeArea(
         child: Stack(
           children: [
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: Icon(
+                  isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                  color: textColor,
+                ),
+                onPressed: () => themeNotifier.toggle(),
+              ),
+            ),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -113,6 +133,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       fieldColor: fieldColor,
                       textColor: textColor,
                       controller: _emailController,
+                      errorText: _emailError,
                     ),
                     const SizedBox(height: 16),
 
@@ -124,6 +145,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       obscure: !_showPassword,
                       controller: _passwordController,
                       onIconTap: () => setState(() => _showPassword = !_showPassword),
+                      errorText: _passwordError,
                     ),
                     const SizedBox(height: 16),
 
@@ -135,6 +157,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       obscure: !_showConfirmPassword,
                       controller: _confirmPasswordController,
                       onIconTap: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                      errorText: _confirmPasswordError,
                     ),
                     const SizedBox(height: 32),
 
@@ -152,7 +175,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         child: context.watch<AuthViewModel>().isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : Text(
-                                'sign in',
+                                'SIGN IN',
                                 style: TextStyle(
                                   color: isDark ? Colors.black : Colors.white,
                                   fontSize: 16,
@@ -206,27 +229,41 @@ class _SignInScreenState extends State<SignInScreen> {
     TextEditingController? controller,
     bool obscure = false,
     VoidCallback? onIconTap,
+    String? errorText,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: fieldColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: TextStyle(color: textColor),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          suffixIcon: GestureDetector(
-            onTap: onIconTap,
-            child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: fieldColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            style: TextStyle(color: textColor),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              suffixIcon: GestureDetector(
+                onTap: onIconTap,
+                child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
+              ),
+            ),
           ),
         ),
-      ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }

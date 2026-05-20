@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'report_details_screen.dart';
@@ -23,14 +24,28 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
   double? _userLongitude;
   final MapController _mapController = MapController();
   bool _isMapCentered = false;
+  LatLngBounds? _visibleBounds;
+  StreamSubscription<MapEvent>? _mapEventSub;
 
   @override
   void initState() {
     super.initState();
+    // Track map viewport changes to keep the list in sync
+    _mapEventSub = _mapController.mapEventStream.listen((event) {
+      if (mounted) {
+        setState(() => _visibleBounds = event.camera.visibleBounds);
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReportViewModel>().loadReports();
       _fetchUserLocation();
     });
+  }
+
+  @override
+  void dispose() {
+    _mapEventSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchUserLocation({bool forceRecenter = false}) async {
@@ -74,6 +89,65 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     }
   }
 
+  /// Returns only reports whose coordinates fall within the current map viewport.
+  /// Falls back to all reports when no bounds are known yet.
+  List<Report> _getVisibleReports(List<Report> allReports) {
+    if (_visibleBounds == null) return allReports;
+    return allReports
+        .where((r) => _visibleBounds!.contains(LatLng(r.latitude, r.longitude)))
+        .toList();
+  }
+
+  Widget _buildListView(
+    List<Report> allReports,
+    Color subText,
+    bool isDark,
+    Color cardBg,
+    Color textColor,
+  ) {
+    final visibleReports = _getVisibleReports(allReports);
+    return Column(
+      children: [
+        // Subtle viewport indicator
+        if (_visibleBounds != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Row(
+              children: [
+                Icon(Icons.map_outlined, size: 13, color: subText),
+                const SizedBox(width: 6),
+                Text(
+                  '${visibleReports.length} report${visibleReports.length == 1 ? '' : 's'} in current map view',
+                  style: TextStyle(fontSize: 12, color: subText),
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: visibleReports.isEmpty
+              ? Center(
+                  child: Text(
+                    _visibleBounds != null
+                        ? 'No reports in this area'
+                        : 'No reports found',
+                    style: TextStyle(color: subText),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: visibleReports.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    return _buildIssueCard(
+                      visibleReports[index], isDark, cardBg, textColor, subText,
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeNotifier>().isDark;
@@ -85,6 +159,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
 
     final reportViewModel = context.watch<ReportViewModel>();
     final reports = reportViewModel.reports;
+    final nearbyReports = reportViewModel.nearbyReports;
 
     return Scaffold(
       backgroundColor: bg,
@@ -97,14 +172,24 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'phero.',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: primary,
-                      letterSpacing: 0.5,
-                    ),
+                  Row(
+                    children: [
+                      Image.asset(
+                        isDark ? 'assets/images/logo_head_dark.png' : 'assets/images/logo_head_light.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Phero',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                   GestureDetector(
                     onTap: () {
@@ -144,19 +229,11 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
             Expanded(
               child: reportViewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : reports.isEmpty
-                      ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
+                  : reportViewModel.errorMessage != null
+                      ? Center(child: Text('Error: ${reportViewModel.errorMessage}', style: const TextStyle(color: Colors.red)))
                       : _isListView
-                          ? ListView.separated(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: reports.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final report = reports[index];
-                                return _buildIssueCard(report, isDark, cardBg, textColor, subText);
-                              },
-                            )
-                          : ClipRRect(
+                          ? _buildListView(reports, subText, isDark, cardBg, textColor)
+                      : ClipRRect(
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(24),
                                 topRight: Radius.circular(24),
@@ -177,31 +254,9 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                                         userAgentPackageName: 'com.phero.app',
                                       ),
                                       MarkerLayer(
-                                        markers: reports.map((report) {
-                                          return Marker(
-                                            point: LatLng(report.latitude, report.longitude),
-                                            width: 40,
-                                            height: 40,
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => ReportDetailsScreen(
-                                                      report: report,
-                                                      isDark: isDark,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.location_on,
-                                                size: 36,
-                                                color: _statusColor(report.status, isDark),
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
+                                        markers: nearbyReports.isEmpty
+                                          ? reports.map((report) => _makeMarker(report, context, isDark)).toList()
+                                          : nearbyReports.map((report) => _makeMarker(report, context, isDark)).toList(),
                                       ),
                                     ],
                                   ),
@@ -262,6 +317,29 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     );
   }
 
+  Marker _makeMarker(Report report, BuildContext context, bool isDark) {
+    return Marker(
+      point: LatLng(report.latitude, report.longitude),
+      width: 40,
+      height: 40,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReportDetailsScreen(report: report),
+            ),
+          );
+        },
+        child: Icon(
+          Icons.location_on,
+          size: 36,
+          color: _statusColor(report.status, isDark),
+        ),
+      ),
+    );
+  }
+
   Widget _buildIssueCard(Report report, bool isDark, Color cardBg, Color textColor, Color subText) {
     final statusColor = _statusColor(report.status, isDark);
     final timeStr = '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}';
@@ -272,7 +350,6 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           MaterialPageRoute(
             builder: (context) => ReportDetailsScreen(
               report: report,
-              isDark: isDark,
             ),
           ),
         );
@@ -298,7 +375,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
                 children: [
                   Text(report.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textColor)),
                   const SizedBox(height: 2),
-                  Text('${report.latitude.toStringAsFixed(4)}° N, ${report.longitude.toStringAsFixed(4)}° W', style: TextStyle(fontSize: 12, color: subText)),
+                  Text('${report.latitude.abs().toStringAsFixed(4)}° ${report.latitude >= 0 ? 'N' : 'S'}, ${report.longitude.abs().toStringAsFixed(4)}° ${report.longitude >= 0 ? 'E' : 'W'}', style: TextStyle(fontSize: 12, color: subText)),
                 ],
               ),
             ),

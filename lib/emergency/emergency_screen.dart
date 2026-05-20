@@ -41,7 +41,24 @@ class EmergencyScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('phero.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primary)),
+                  Row(
+                    children: [
+                      Image.asset(
+                        isDark ? 'assets/images/logo_head_dark.png' : 'assets/images/logo_head_light.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Phero',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                        ),
+                      ),
+                    ],
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSettingsScreen())),
                     child: Container(

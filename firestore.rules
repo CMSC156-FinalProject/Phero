@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+match /databases/{database}/documents {
+
+// Helper function to check if the requesting user is a verified administrator
+function isAdmin() {
+  return request.auth != null && 
+    exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+
+// Rules for the 'users' collection
+match /users/{userId} {
+  // Any authenticated user can read profile data
+  allow read: if request.auth != null;
+  
+  // Allow profile creation during sign-up only if they do NOT attempt to self-assign 'admin'
+  allow create: if request.auth != null && 
+    request.auth.uid == userId && 
+    (!('role' in request.resource.data) || request.resource.data.role != 'admin');
+  
+  // Allow users to update their own profiles, but strictly forbid modifying the 'role' field.
+  // Administrators bypass this restriction and can write/update any role.
+  allow update: if request.auth != null && (
+    isAdmin() || (
+      request.auth.uid == userId && 
+      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
+    )
+  );
+
+  // Only administrators can delete user accounts in Firestore
+  allow delete: if isAdmin();
+}
+
+// Rules for the 'reports' collection
+match /reports/{reportId} {
+  allow read: if request.auth != null;
+  
+  // Anyone logged in can create a report under their own userId
+  allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+  
+  // Only the report owner or a verified administrator can modify or delete a report
+  allow update, delete: if request.auth != null && (
+    request.auth.uid == resource.data.userId || isAdmin()
+  );
+}
+
+// Rules for the 'admin_applications' collection
+match /admin_applications/{applicationId} {
+  // Users can read their own applications, while admins can read all applications
+  allow read: if request.auth != null && (
+    request.auth.uid == resource.data.userId || isAdmin()
+  );
+
+  // Authenticated users can submit applications where they are the owner and the state is set to pending
+  allow create: if request.auth != null && 
+    request.auth.uid == request.resource.data.userId &&
+    request.resource.data.status == 'pending';
+
+  // Only administrators can approve, decline, update, or remove applications
+  allow update, delete: if isAdmin();
+}
+
+
+}
+}

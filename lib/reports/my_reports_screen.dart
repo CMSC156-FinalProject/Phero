@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'report_details_screen.dart';
 import '../settings/account_settings_screen.dart';
 import '../reports/widgets/custom_bottom_navbar.dart';
@@ -55,10 +56,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _filteredReports(List<Report> reports) {
     if (_selectedFilter == 'All') return reports;
     return reports.where((r) {
-      final status = r.status.toUpperCase();
-      if (_selectedFilter == 'Submitted') return status == 'SUBMITTED' || status == 'PENDING';
-      if (_selectedFilter == 'In Progress') return status == 'IN PROGRESS';
-      if (_selectedFilter == 'Resolved') return status == 'RESOLVED';
+      final status = r.status.toLowerCase();
+      if (_selectedFilter == 'Submitted') return status == 'submitted' || status == 'pending';
+      if (_selectedFilter == 'In Progress') return status == 'in progress' || status == 'in_progress';
+      if (_selectedFilter == 'Resolved') return status == 'resolved';
       return true;
     }).toList();
   }
@@ -87,7 +88,25 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('phero.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primary, letterSpacing: 0.5)),
+                  Row(
+                    children: [
+                      Image.asset(
+                        isDark ? 'assets/images/logo_head_dark.png' : 'assets/images/logo_head_light.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Phero',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSettingsScreen())),
                     child: Container(
@@ -158,8 +177,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             Expanded(
               child: reportViewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : filtered.isEmpty
-                      ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
+                  : reportViewModel.errorMessage != null
+                      ? Center(child: Text('Error: ${reportViewModel.errorMessage}', style: const TextStyle(color: Colors.red)))
+                      : filtered.isEmpty
+                          ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: filtered.length,
@@ -187,7 +208,6 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           MaterialPageRoute(
             builder: (context) => ReportDetailsScreen(
               report: report,
-              isDark: isDark,
             ),
           ),
         );
@@ -205,10 +225,20 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               child: SizedBox(
                 width: 80, height: 85,
                 child: report.mediaPath != null && report.mediaPath!.isNotEmpty
-                    ? Image.network(
-                        report.mediaPath!,
+                    ? CachedNetworkImage(
+                        imageUrl: report.mediaPath!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
                           color: Colors.grey.withValues(alpha: 0.3),
                           child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.4), size: 28),
                         ),
@@ -244,7 +274,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${report.latitude.toStringAsFixed(4)}° N, ${report.longitude.toStringAsFixed(4)}° W',
+                      '${report.latitude.abs().toStringAsFixed(4)}° ${report.latitude >= 0 ? 'N' : 'S'}, ${report.longitude.abs().toStringAsFixed(4)}° ${report.longitude >= 0 ? 'E' : 'W'}',
                       style: TextStyle(fontSize: 12, color: subText),
                     ),
                     const SizedBox(height: 6),
