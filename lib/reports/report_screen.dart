@@ -25,6 +25,8 @@ class _ReportScreenState extends State<ReportScreen> {
 
   double? _latitude;
   double? _longitude;
+  bool _isFetchingLocation = false;
+  String? _locationError;
 
   // Issue Category Dropdown
   String? _selectedCategory;
@@ -49,6 +51,12 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _fetchLocation() async {
+    if (_isFetchingLocation) return;
+    setState(() {
+      _isFetchingLocation = true;
+      _locationError = null;
+    });
+
     try {
       final service = context.read<LocationService>();
       final location = await service.getCurrentLocation();
@@ -56,10 +64,21 @@ class _ReportScreenState extends State<ReportScreen> {
         setState(() {
           _latitude = location.latitude;
           _longitude = location.longitude;
+          _locationError = null;
+        });
+      } else {
+        setState(() {
+          _locationError = 'Failed to get location. Tap to retry.';
         });
       }
     } catch (e) {
-      // Graceful error handling
+      setState(() {
+        _locationError = 'Error: ${e.toString()}. Tap to retry.';
+      });
+    } finally {
+      setState(() {
+        _isFetchingLocation = false;
+      });
     }
   }
 
@@ -118,8 +137,11 @@ class _ReportScreenState extends State<ReportScreen> {
     }
 
     if (_latitude == null || _longitude == null) {
+      final message = _isFetchingLocation
+          ? 'Still fetching location. Please wait a moment.'
+          : 'Location not available. Tap the location card to retry.';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location not available yet. Please wait a moment and try again.')),
+        SnackBar(content: Text(message)),
       );
       return;
     }
@@ -346,46 +368,76 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 16),
 
                     // Location field
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF1A3020)
-                            : const Color(0xFFEDF4E8),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: primary.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on_outlined, size: 18, color: primary),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Location',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: primary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _latitude != null && _longitude != null
-                                    ? '${_latitude!.abs().toStringAsFixed(4)}° ${_latitude! >= 0 ? 'N' : 'S'}, ${_longitude!.abs().toStringAsFixed(4)}° ${_longitude! >= 0 ? 'E' : 'W'}'
-                                    : 'Fetching location...',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: subText,
-                                ),
-                              ),
-                            ],
+                    GestureDetector(
+                      onTap: _fetchLocation,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: _locationError != null
+                              ? (isDark ? const Color(0xFF3D1B1B) : const Color(0xFFFDE8E8))
+                              : (isDark ? const Color(0xFF1A3020) : const Color(0xFFEDF4E8)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _locationError != null
+                                ? Colors.redAccent.withValues(alpha: 0.3)
+                                : primary.withValues(alpha: 0.3),
+                            width: 1,
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _locationError != null
+                                  ? Icons.location_off_outlined
+                                  : Icons.location_on_outlined,
+                              size: 18,
+                              color: _locationError != null ? Colors.redAccent : primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Location',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: _locationError != null ? Colors.redAccent : primary,
+                                        ),
+                                      ),
+                                      if (_isFetchingLocation) ...[
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 10,
+                                          height: 10,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 1.5,
+                                            color: primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _latitude != null && _longitude != null
+                                        ? '${_latitude!.abs().toStringAsFixed(4)}° ${_latitude! >= 0 ? 'N' : 'S'}, ${_longitude!.abs().toStringAsFixed(4)}° ${_longitude! >= 0 ? 'E' : 'W'}'
+                                        : (_locationError ?? 'Fetching location...'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _locationError != null
+                                          ? (isDark ? Colors.red[300] : Colors.red[800])
+                                          : subText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 

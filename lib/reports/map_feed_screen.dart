@@ -72,9 +72,23 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
           _mapController.move(LatLng(location.latitude, location.longitude), 14.0);
           _isMapCentered = true;
         }
+      } else {
+        if (forceRecenter && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to retrieve location. Please check settings/permissions.'),
+            ),
+          );
+        }
       }
     } catch (e) {
-      // Graceful error handling
+      if (forceRecenter && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error getting location: ${e.toString()}'),
+          ),
+        );
+      }
     }
   }
 
