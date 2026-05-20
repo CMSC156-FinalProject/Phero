@@ -15,6 +15,7 @@ class ReportViewModel extends ChangeNotifier {
 
   List<Report> _reports = [];
   List<Report> _userReports = [];
+  List<Report> _nearbyReports = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -32,6 +33,7 @@ class ReportViewModel extends ChangeNotifier {
 
   List<Report> get reports => _reports;
   List<Report> get userReports => _userReports;
+  List<Report> get nearbyReports => _nearbyReports;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -72,7 +74,7 @@ class ReportViewModel extends ChangeNotifier {
   Future<void> loadNearbyReports(double latitude, double longitude, double radiusInKm) async {
     _setLoading(true);
     try {
-      _reports = await _fetchNearbyReportsUseCase.execute(
+      _nearbyReports = await _fetchNearbyReportsUseCase.execute(
         latitude: latitude,
         longitude: longitude,
         radiusInKm: radiusInKm,
@@ -120,8 +122,30 @@ class ReportViewModel extends ChangeNotifier {
     try {
       await _updateReportStatusUseCase.execute(reportId, newStatus);
       _setError(null);
-      // Reload reports to reflect the updated status
-      await loadReports();
+      
+      // Update locally to prevent a full refetch of all reports
+      final index = _reports.indexWhere((r) => r.id == reportId);
+      if (index != -1) {
+        final old = _reports[index];
+        _reports[index] = Report(
+          id: old.id, title: old.title, description: old.description,
+          userId: old.userId, timestamp: old.timestamp, 
+          latitude: old.latitude, longitude: old.longitude,
+          geoHash: old.geoHash, mediaPath: old.mediaPath, status: newStatus,
+        );
+      }
+
+      final userIndex = _userReports.indexWhere((r) => r.id == reportId);
+      if (userIndex != -1) {
+        final old = _userReports[userIndex];
+        _userReports[userIndex] = Report(
+          id: old.id, title: old.title, description: old.description,
+          userId: old.userId, timestamp: old.timestamp, 
+          latitude: old.latitude, longitude: old.longitude,
+          geoHash: old.geoHash, mediaPath: old.mediaPath, status: newStatus,
+        );
+      }
+      
       return true;
     } catch (e) {
       _setError(e.toString());

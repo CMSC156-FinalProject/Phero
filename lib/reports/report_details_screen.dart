@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../domain/models/report.dart';
+import '../core/theme/theme_notifier.dart';
 import '../presentation/viewmodels/auth_viewmodel.dart';
 import '../presentation/viewmodels/report_viewmodel.dart';
 
 class ReportDetailsScreen extends StatefulWidget {
   final Report report;
-  final bool isDark;
 
   const ReportDetailsScreen({
     super.key,
     required this.report,
-    required this.isDark,
   });
 
   @override
@@ -19,9 +19,9 @@ class ReportDetailsScreen extends StatefulWidget {
 }
 
 class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
-  Color _statusColor(String status) {
+  Color _statusColor(String status, bool isDark) {
     switch (status.toUpperCase()) {
-      case 'IN PROGRESS': return widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
+      case 'IN PROGRESS': return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
       case 'RESOLVED': return const Color(0xFF5AAA6A);
       default: return const Color(0xFFF55858);
     }
@@ -109,11 +109,12 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = widget.isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
-    final bg = widget.isDark ? const Color(0xFF0D1B2A) : Colors.white;
-    final cardBg = widget.isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
-    final textColor = widget.isDark ? Colors.white : const Color(0xFF2C3A1E);
-    final subText = widget.isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+    final isDark = context.watch<ThemeNotifier>().isDark;
+    final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
+    final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
+    final textColor = isDark ? Colors.white : const Color(0xFF2C3A1E);
+    final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
 
     final authViewModel = context.watch<AuthViewModel>();
     final currentUser = authViewModel.currentUser;
@@ -153,14 +154,14 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeaderInfo(primary, textColor, subText),
-            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
+            _buildHeaderInfo(primary, textColor, subText, isDark),
+            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
             _buildDescription(primary, textColor, subText),
-            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
             _buildLocation(textColor),
-            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
-            _buildAttachments(textColor),
-            Container(height: 8, color: widget.isDark ? Colors.black26 : Colors.grey[100]),
+            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
+            _buildAttachments(textColor, isDark),
+            Container(height: 8, color: isDark ? Colors.black26 : Colors.grey[100]),
             _buildTimeline(primary, textColor, subText),
           ],
         ),
@@ -188,13 +189,13 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                     style: TextStyle(
                       fontSize: 16, 
                       fontWeight: FontWeight.bold,
-                      color: widget.isDark ? Colors.black : Colors.white,
+                      color: isDark ? Colors.black : Colors.white,
                     ),
                   ),
                 )
               : ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.isDark ? const Color(0xFF132030) : Colors.grey[200],
+                    backgroundColor: isDark ? const Color(0xFF132030) : Colors.grey[200],
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -217,9 +218,9 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     );
   }
 
-  Widget _buildHeaderInfo(Color primary, Color textColor, Color subText) {
+  Widget _buildHeaderInfo(Color primary, Color textColor, Color subText, bool isDark) {
     final status = widget.report.status;
-    final sColor = _statusColor(status);
+    final sColor = _statusColor(status, isDark);
     final dateStr = '${widget.report.timestamp.day}/${widget.report.timestamp.month}/${widget.report.timestamp.year}';
     final shortId = widget.report.id.length > 8 ? 'REP-${widget.report.id.substring(0, 8).toUpperCase()}' : 'REP-${widget.report.id.toUpperCase()}';
 
@@ -274,7 +275,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${widget.report.latitude.toStringAsFixed(4)}° N, ${widget.report.longitude.toStringAsFixed(4)}° W',
+                  '${widget.report.latitude.abs().toStringAsFixed(4)}° ${widget.report.latitude >= 0 ? 'N' : 'S'}, ${widget.report.longitude.abs().toStringAsFixed(4)}° ${widget.report.longitude >= 0 ? 'E' : 'W'}',
                   style: TextStyle(color: subText, fontSize: 13),
                 ),
               ),
@@ -333,7 +334,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     );
   }
 
-  Widget _buildAttachments(Color textColor) {
+  Widget _buildAttachments(Color textColor, bool isDark) {
     final mediaUrl = widget.report.mediaPath;
     return Container(
       padding: const EdgeInsets.all(20),
@@ -348,24 +349,21 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
           if (mediaUrl != null && mediaUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                mediaUrl,
+              child: CachedNetworkImage(
+                imageUrl: mediaUrl,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Container(
-                    height: 200,
-                    color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[200],
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
+                placeholder: (context, url) => Container(
                   height: 200,
-                  color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[200],
+                  color: isDark ? const Color(0xFF1E3040) : Colors.grey[200],
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  height: 200,
+                  color: isDark ? const Color(0xFF1E3040) : Colors.grey[200],
                   child: Center(
-                    child: Icon(Icons.broken_image_outlined, color: widget.isDark ? Colors.white30 : Colors.black26, size: 40),
+                    child: Icon(Icons.broken_image_outlined, color: isDark ? Colors.white30 : Colors.black26, size: 40),
                   ),
                 ),
               ),
@@ -374,7 +372,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
-                color: widget.isDark ? const Color(0xFF1E3040) : Colors.grey[100],
+                color: isDark ? const Color(0xFF1E3040) : Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(

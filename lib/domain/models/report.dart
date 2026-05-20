@@ -27,14 +27,31 @@ class Report {
   }) : geoHash = geoHash ?? GeoFirePoint(GeoPoint(latitude, longitude)).geohash;
 
   factory Report.fromJson(Map<String, dynamic> json) {
+    // Safely parse timestamp whether it's a string or Firestore Timestamp
+    DateTime parsedTimestamp;
+    if (json['timestamp'] is Timestamp) {
+      parsedTimestamp = (json['timestamp'] as Timestamp).toDate();
+    } else if (json['timestamp'] is String) {
+      parsedTimestamp = DateTime.parse(json['timestamp'] as String);
+    } else {
+      parsedTimestamp = DateTime.now(); // Fallback
+    }
+
+    // Safely parse coordinates
+    double parseDouble(dynamic val) {
+      if (val is String) return double.tryParse(val) ?? 0.0;
+      if (val is num) return val.toDouble();
+      return 0.0;
+    }
+
     return Report(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      userId: json['userId'] as String,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? 'Untitled',
+      description: json['description'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      timestamp: parsedTimestamp,
+      latitude: parseDouble(json['latitude']),
+      longitude: parseDouble(json['longitude']),
       geoHash: json['geoHash'] as String?,
       mediaPath: json['mediaPath'] as String?,
       status: json['status'] as String? ?? 'pending',

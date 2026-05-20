@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:phero_app/auth/signin_screen.dart';
 import 'package:phero_app/main.dart';
+import '../test_utils.dart';
+import 'package:phero_app/core/theme/theme_notifier.dart';
 
 void main() {
   Widget createWidgetForTesting( { bool isDark = false, VoidCallback? onToggle } ) {
-    return MaterialApp(
-      home: SignInScreen(),
+    final themeNotifier = ThemeNotifier();
+    if (isDark) {
+      themeNotifier.toggle();
+    }
+    return createTestableWidget(
+      themeNotifier: themeNotifier,
+      child: const SignInScreen(),
     );
   }
   
@@ -15,13 +23,16 @@ void main() {
     testWidgets('Submitting empty fields show validation errors', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
       
-      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
+      // Wait for AuthViewModel initialization
+      await tester.pumpAndSettle();
+      
+      final signInBtn = find.byType(ElevatedButton);
 
       await tester.tap(signInBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter your email'), findsOneWidget);
-      expect(find.text('Please enter your password'), findsOneWidget);
+      expect(find.text('Email is required', skipOffstage: false), findsOneWidget);
+      expect(find.text('Password is required', skipOffstage: false), findsOneWidget);
 
     });
 
@@ -29,24 +40,26 @@ void main() {
       await tester.pumpWidget(createWidgetForTesting());
       
       final emailField = find.byType(TextField).first;
-      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
+      final signInBtn = find.byType(ElevatedButton);
 
       await tester.enterText(emailField, 'isko@up.edu.ph');
       
       await tester.tap(signInBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter your password'), findsOneWidget);
-      expect(find.text('Please enter your email'), findsNothing);
+      expect(find.text('Password is required', skipOffstage: false), findsOneWidget);
+      expect(find.text('Email is required', skipOffstage: false), findsNothing);
     });
 
     testWidgets('Unmatching Password and Confirm Password show error', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
       
-      final passwordField = find.byType(TextField).first;
-      final confirmPasswordField = find.byType(TextField).last;
-      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
+      final emailField = find.byType(TextField).at(0);
+      final passwordField = find.byType(TextField).at(1);
+      final confirmPasswordField = find.byType(TextField).at(2);
+      final signInBtn = find.byType(ElevatedButton);
 
+      await tester.enterText(emailField, 'test@example.com');
       await tester.enterText(passwordField, 'password123');
       await tester.enterText(confirmPasswordField, 'differentpassword');
 
@@ -60,29 +73,35 @@ void main() {
   // ====== THEME TOGGLE TESTS ======
   group('Theme Toggle Tests', () {
       testWidgets('Show moon icon in light mode', (WidgetTester tester) async {
-        final themeToggleBtn = find.byType(IconButton);
-
         await tester.pumpWidget(createWidgetForTesting(isDark: false));
 
-        expect(themeToggleBtn, findsOneWidget);
+        expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
       });
 
       testWidgets('Show sun icon in dark mode', (WidgetTester tester) async {
-        final themeToggleBtn = find.byType(IconButton);
-
         await tester.pumpWidget(createWidgetForTesting(isDark: true));
 
-        expect(themeToggleBtn, findsOneWidget);
+        expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
       });
 
       testWidgets('Toggle theme button is triggered', (WidgetTester tester) async {
-        await tester.pumpWidget(const PheroApp()); // Use the actual app to test theme toggle
+        await tester.pumpWidget(
+          MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+            ],
+            child: const PheroApp(),
+          ),
+        ); // Use the actual app to test theme toggle
         
+        // Wait for SplashScreen
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+
         await tester.tap(find.byIcon(Icons.nightlight_round));
         await tester.pumpAndSettle();
 
-        expect(find.byIcon(Icons.nightlight_round), findsNothing); // Should show moon icon in light mode
-        expect(find.byIcon(Icons.wb_sunny), findsOneWidget);  // Should show sun icon in dark mode
+        expect(find.byIcon(Icons.nightlight_round), findsNothing);
+        expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
       });
   });
 
@@ -91,15 +110,16 @@ void main() {
     testWidgets('Password Visibility Test', (WidgetTester tester) async {
 
       await tester.pumpWidget(createWidgetForTesting());
-      final toggleBtns = find.byIcon(Icons.visibility_off_outlined);
-      expect(toggleBtns, findsNWidgets(2)); // Should find 2 toggle buttons for password and confirm password fields
-
-      await tester.tap(toggleBtns.first);
-      await tester.tap(toggleBtns.last);
       
-      await tester.pumpAndSettle(); // Waits for the UI to rebuild after tapping the toggle buttons
+      // Password and Confirm Password fields both use Icons.visibility_off_outlined
+      expect(find.byIcon(Icons.visibility_off_outlined), findsNWidgets(2));
 
-      expect(toggleBtns, findsNWidgets(2));
+      await tester.tap(find.byIcon(Icons.visibility_off_outlined).first);
+      await tester.tap(find.byIcon(Icons.visibility_off_outlined).last);
+      
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.visibility_off_outlined), findsNWidgets(2));
     });
   });
 
@@ -108,13 +128,16 @@ void main() {
     testWidgets('Elevated "Sign In" button navigates to Report Page', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
 
-      final signInBtn = find.widgetWithText(ElevatedButton, 'sign in');
+      final signInBtn = find.byType(ElevatedButton);
       expect(signInBtn, findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).at(0), 'test@example.com');
+      await tester.enterText(find.byType(TextField).at(1), 'password123');
+      await tester.enterText(find.byType(TextField).at(2), 'password123');
 
       await tester.tap(signInBtn);
       await tester.pumpAndSettle();
- 
-      expect(find.text('Report Issue'), findsOne); // Verifies that the Report page is shown
+      expect(find.text('Phero'), findsOneWidget); // Verifies that the Report page is shown
 
       // Verifies that the Sign in page is gone
       expect(find.text('Confirm Password'), findsNothing);
@@ -123,15 +146,20 @@ void main() {
     testWidgets('TextButton "Already have an account? Log in" navigates to Login Page', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetForTesting());
   
-      final loginBtn = find.text('LOG IN');
-      expect(loginBtn, findsOne);
+      // Find the "LOG IN" link text (not the header)
+      final loginLink = find.descendant(
+        of: find.byType(GestureDetector),
+        matching: find.text('LOG IN'),
+      );
+      expect(loginLink, findsOneWidget);
   
-      await tester.tap(loginBtn);
+      await tester.tap(loginLink);
       await tester.pumpAndSettle();
   
-      expect(find.text('LOG IN'), findsOne); // Verifies that the Login page is shown
+      // Should now be on the Login screen, which has the "LOG IN" elevated button
+      expect(find.byType(ElevatedButton), findsOneWidget); 
   
-      // Should verify that the Sign in page is gone
+      // Verifies that the Sign in page is gone
       expect(find.text('Confirm Password'), findsNothing);
     });
   });

@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/login_screen.dart';
+import '../../reports/map_feed_screen.dart';
 import '../../core/theme/theme_notifier.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -53,10 +55,16 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (!mounted) return;
+        
+        final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+        final Widget nextScreen = isLoggedIn
+            ? const MapFeedScreen()
+            : const LoginScreen();
+
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, _, _) => const LoginScreen(),
+            pageBuilder: (_, _, _) => nextScreen,
             transitionDuration: Duration.zero,
           ),
         );

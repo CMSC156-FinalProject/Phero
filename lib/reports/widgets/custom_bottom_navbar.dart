@@ -5,6 +5,8 @@ import '../report_screen.dart';
 import '../my_reports_screen.dart';
 import '/emergency/emergency_screen.dart';
 import '../../core/theme/theme_notifier.dart';
+import '../../features/admin/admin_dashboard_screen.dart';
+import '../../presentation/viewmodels/auth_viewmodel.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -31,6 +33,9 @@ class CustomBottomNav extends StatelessWidget {
       case 3:
         nextScreen = const EmergencyScreen();
         break;
+      case 4:
+        nextScreen = const AdminDashboardScreen();
+        break;
       default:
         return;
     }
@@ -48,6 +53,7 @@ class CustomBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeNotifier>().isDark;
+    final isAdmin = context.watch<AuthViewModel>().isAdmin;
     final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
     final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
     final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
@@ -70,6 +76,8 @@ class CustomBottomNav extends StatelessWidget {
               _buildNavItem(context, Icons.camera_alt_outlined, 'Report', 1, primary, subText),
               _buildNavItem(context, Icons.assignment_outlined, 'My Reports', 2, primary, subText),
               _buildNavItem(context, Icons.phone_outlined, 'Emergency', 3, primary, subText),
+              if (isAdmin)
+                _buildNavItem(context, Icons.admin_panel_settings_outlined, 'Admin', 4, primary, subText),
             ],
           ),
         ),

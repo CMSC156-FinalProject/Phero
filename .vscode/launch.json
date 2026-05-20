@@ -2,23 +2,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "name": "Phero (Flutter)",
       "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "d:/CMSC156LAB_Workspace/CMSC156-FinalProject-Phero/linux/flutter",
-      "program": "d:/CMSC156LAB_Workspace/CMSC156-FinalProject-Phero/linux/flutter/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "type": "dart",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Phero (Flutter Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Phero (Flutter Release)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "release"
     }
   ]
 }
