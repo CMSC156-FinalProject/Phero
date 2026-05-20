@@ -45,7 +45,7 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchLocation());
   }
 
   Future<void> _fetchLocation() async {
@@ -117,6 +117,13 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
+    if (_latitude == null || _longitude == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location not available yet. Please wait a moment and try again.')),
+      );
+      return;
+    }
+
     final reportViewModel = context.read<ReportViewModel>();
     final success = await reportViewModel.submitReport(
       title: _selectedCategory!,
@@ -168,14 +175,24 @@ class _ReportScreenState extends State<ReportScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'phero.',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: primary,
-                      letterSpacing: 0.5,
-                    ),
+                  Row(
+                    children: [
+                      Image.asset(
+                        isDark ? 'assets/images/logo_head_dark.png' : 'assets/images/logo_head_light.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Phero',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                   GestureDetector(
                     onTap: () => Navigator.push(
@@ -359,7 +376,7 @@ class _ReportScreenState extends State<ReportScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 _latitude != null && _longitude != null
-                                    ? '${_latitude!.toStringAsFixed(4)}° N, ${_longitude!.toStringAsFixed(4)}° W'
+                                    ? '${_latitude!.abs().toStringAsFixed(4)}° ${_latitude! >= 0 ? 'N' : 'S'}, ${_longitude!.abs().toStringAsFixed(4)}° ${_longitude! >= 0 ? 'E' : 'W'}'
                                     : 'Fetching location...',
                                 style: TextStyle(
                                   fontSize: 12,

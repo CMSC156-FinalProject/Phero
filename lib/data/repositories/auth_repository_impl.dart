@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/app_user.dart';
@@ -92,5 +93,55 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
+  }
+
+  @override
+  Stream<AppUser?> get userChanges {
+    late StreamController<AppUser?> controller;
+    StreamSubscription<User?>? authSub;
+    StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? firestoreSub;
+
+    controller = StreamController<AppUser?>(
+      onListen: () {
+        authSub = _firebaseAuth.authStateChanges().listen((User? user) {
+          if (user == null) {
+            firestoreSub?.cancel();
+            firestoreSub = null;
+            controller.add(null);
+          } else {
+            firestoreSub?.cancel();
+            firestoreSub = _firestore
+                .collection('users')
+                .doc(user.uid)
+                .snapshots()
+                .listen((snapshot) {
+              if (snapshot.exists && snapshot.data() != null) {
+                controller.add(AppUser.fromJson(snapshot.data()!));
+              } else {
+                controller.add(AppUser(
+                  id: user.uid,
+                  email: user.email ?? '',
+                  displayName: user.displayName,
+                  role: 'user',
+                ));
+              }
+            }, onError: (err) {
+              controller.add(AppUser(
+                id: user.uid,
+                email: user.email ?? '',
+                displayName: user.displayName,
+                role: 'user',
+              ));
+            });
+          }
+        });
+      },
+      onCancel: () {
+        authSub?.cancel();
+        firestoreSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 }

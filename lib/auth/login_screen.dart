@@ -16,16 +16,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
+  String? _emailError;
+  String? _passwordError;
 
   Future<void> _login() async {
+    setState(() {
+      _emailError = _emailController.text.isEmpty ? 'Email is required' : null;
+      _passwordError = _passwordController.text.isEmpty
+          ? 'Password is required'
+          : null;
+    });
+
+    if (_emailError != null || _passwordError != null) return;
+
     final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
-      );
-      return;
-    }
+    final password = _passwordController.text;
 
     final authViewModel = context.read<AuthViewModel>();
     final success = await authViewModel.signIn(email, password);
@@ -56,17 +61,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeNotifier>().isDark;
+    final themeNotifier = context.watch<ThemeNotifier>();
+    final isDark = themeNotifier.isDark;
     final bg = isDark ? const Color(0xFF0D1B2A) : Colors.white;
     final primary = isDark ? const Color(0xFF2ECC71) : const Color(0xFF3B4A2F);
     final textColor = isDark ? Colors.white : const Color(0xFF3B4A2F);
-    final fieldColor = isDark ? const Color(0xFF1A2E1A) : const Color(0xFFEAEFE4);
+    final fieldColor = isDark
+        ? const Color(0xFF1A2E1A)
+        : const Color(0xFFEAEFE4);
 
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Stack(
           children: [
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: Icon(
+                  isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                  color: textColor,
+                ),
+                onPressed: () => themeNotifier.toggle(),
+              ),
+            ),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -90,7 +109,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Divider(color: primary, thickness: 2, indent: 120, endIndent: 120),
+                    Divider(
+                      color: primary,
+                      thickness: 2,
+                      indent: 120,
+                      endIndent: 120,
+                    ),
                     const SizedBox(height: 32),
 
                     _buildField(
@@ -99,6 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fieldColor: fieldColor,
                       textColor: textColor,
                       controller: _emailController,
+                      errorText: _emailError,
                     ),
                     const SizedBox(height: 16),
 
@@ -109,7 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       textColor: textColor,
                       obscure: !_showPassword,
                       controller: _passwordController,
-                      onIconTap: () => setState(() => _showPassword = !_showPassword),
+                      onIconTap: () =>
+                          setState(() => _showPassword = !_showPassword),
+                      errorText: _passwordError,
                     ),
                     const SizedBox(height: 32),
 
@@ -123,11 +150,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: context.watch<AuthViewModel>().isLoading ? null : _login,
+                        onPressed: context.watch<AuthViewModel>().isLoading
+                            ? null
+                            : _login,
                         child: context.watch<AuthViewModel>().isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : Text(
-                                'log in',
+                                'LOG IN',
                                 style: TextStyle(
                                   color: isDark ? Colors.black : Colors.white,
                                   fontSize: 16,
@@ -141,8 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Don't have an account? ",
-                            style: TextStyle(color: textColor, fontSize: 13)),
+                        Text(
+                          "Don't have an account? ",
+                          style: TextStyle(color: textColor, fontSize: 13),
+                        ),
                         GestureDetector(
                           onTap: () {
                             Navigator.pushReplacement(
@@ -181,27 +214,44 @@ class _LoginScreenState extends State<LoginScreen> {
     TextEditingController? controller,
     bool obscure = false,
     VoidCallback? onIconTap,
+    String? errorText,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: fieldColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: TextStyle(color: textColor),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          suffixIcon: GestureDetector(
-            onTap: onIconTap,
-            child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: fieldColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            style: TextStyle(color: textColor),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              suffixIcon: GestureDetector(
+                onTap: onIconTap,
+                child: Icon(icon, color: textColor.withValues(alpha: 0.6)),
+              ),
+            ),
           ),
         ),
-      ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }
