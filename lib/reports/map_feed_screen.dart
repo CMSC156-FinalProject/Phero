@@ -79,15 +79,22 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
   }
 
   Color _statusColor(String status, bool isDark) {
-    switch (status.toUpperCase()) {
-      case 'IN PROGRESS':
-        return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
-      case 'RESOLVED':
-        return const Color(0xFF7A9A6A);
-      default:
-        return isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E);
-    }
+  switch (status.toUpperCase()) {
+    case 'IN PROGRESS':
+      return const Color(0xFF4169E1); // Blue
+
+    case 'RESOLVED':
+      return const Color(0xFF008000); // Green
+
+    case 'PENDING':
+      return const Color(0xFFFF0000); // Red
+
+    default:
+      return isDark
+          ? const Color(0xFFB0B0B0)
+          : const Color(0xFF808080); // Gray fallback
   }
+}
 
   /// Returns only reports whose coordinates fall within the current map viewport.
   /// Falls back to all reports when no bounds are known yet.
