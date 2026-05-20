@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'report_screen.dart';
-import 'my_reports_screen.dart';
-import '../emergency/emergency_screen.dart';
+import 'report_details_screen.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
+import '../presentation/viewmodels/report_viewmodel.dart';
+import '../domain/models/report.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../domain/repositories/location_service.dart';
 
 class MapFeedScreen extends StatefulWidget {
   const MapFeedScreen({super.key});
@@ -15,33 +19,58 @@ class MapFeedScreen extends StatefulWidget {
 
 class _MapFeedScreenState extends State<MapFeedScreen> {
   bool _isListView = true;
+  double? _userLatitude;
+  double? _userLongitude;
+  final MapController _mapController = MapController();
+  bool _isMapCentered = false;
 
-  final List<Map<String, dynamic>> _issues = [
-    {'title': 'Pothole', 'address': '123 Main St', 'time': '2h ago', 'status': 'REPORTED'},
-    {'title': 'Broken Streetlight', 'address': '45 Oak Ave', 'time': '5h ago', 'status': 'IN PROGRESS'},
-    {'title': 'Vandalism', 'address': 'Central Park', 'time': '1d ago', 'status': 'RESOLVED'},
-    {'title': 'Fallen Tree', 'address': '90 Pine Rd', 'time': '3h ago', 'status': 'REPORTED'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ReportViewModel>().loadReports();
+      _fetchUserLocation();
+    });
+  }
+
+  Future<void> _fetchUserLocation({bool forceRecenter = false}) async {
+    try {
+      final service = context.read<LocationService>();
+      final location = await service.getCurrentLocation();
+      if (location != null) {
+        setState(() {
+          _userLatitude = location.latitude;
+          _userLongitude = location.longitude;
+        });
+
+        // 1. Fetch localized reports in the surrounding 10 km area via Clean Architecture backend
+        if (mounted) {
+          await context.read<ReportViewModel>().loadNearbyReports(
+            location.latitude,
+            location.longitude,
+            10.0,
+          );
+        }
+
+        // 2. Programmatically center the map viewport
+        if (!_isMapCentered || forceRecenter) {
+          _mapController.move(LatLng(location.latitude, location.longitude), 14.0);
+          _isMapCentered = true;
+        }
+      }
+    } catch (e) {
+      // Graceful error handling
+    }
+  }
 
   Color _statusColor(String status, bool isDark) {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'IN PROGRESS':
         return isDark ? const Color(0xFF2ECC71) : const Color(0xFF4A90D9);
       case 'RESOLVED':
         return const Color(0xFF7A9A6A);
       default:
         return isDark ? const Color(0xFF2ECC71) : const Color(0xFF5C6E3E);
-    }
-  }
-
-  void _onTabTapped(int index) {
-    if (index == 0) return;
-    if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportScreen()));
-    } else if (index == 2) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReportsScreen()));
-    } else if (index == 3) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyScreen()));
     }
   }
 
@@ -53,6 +82,9 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     final cardBg = isDark ? const Color(0xFF132030) : const Color(0xFFF5F7F2);
     final textColor = isDark ? Colors.white : const Color(0xFF2C3A1E);
     final subText = isDark ? const Color(0xFF8AABB0) : const Color(0xFF8A9A7A);
+
+    final reportViewModel = context.watch<ReportViewModel>();
+    final reports = reportViewModel.reports;
 
     return Scaffold(
       backgroundColor: bg,
@@ -110,20 +142,92 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
             const SizedBox(height: 8),
 
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _issues.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final issue = _issues[index];
-                  return _buildIssueCard(issue, isDark, cardBg, textColor, subText);
-                },
-              ),
+              child: reportViewModel.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : reports.isEmpty
+                      ? Center(child: Text('No reports found', style: TextStyle(color: subText)))
+                      : _isListView
+                          ? ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: reports.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final report = reports[index];
+                                return _buildIssueCard(report, isDark, cardBg, textColor, subText);
+                              },
+                            )
+                          : ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(24),
+                                topRight: Radius.circular(24),
+                              ),
+                              child: Stack(
+                                children: [
+                                  FlutterMap(
+                                    mapController: _mapController,
+                                    options: MapOptions(
+                                      initialCenter: _userLatitude != null && _userLongitude != null
+                                          ? LatLng(_userLatitude!, _userLongitude!)
+                                          : const LatLng(14.5995, 120.9842),
+                                      initialZoom: 14.0,
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        userAgentPackageName: 'com.phero.app',
+                                      ),
+                                      MarkerLayer(
+                                        markers: reports.map((report) {
+                                          return Marker(
+                                            point: LatLng(report.latitude, report.longitude),
+                                            width: 40,
+                                            height: 40,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => ReportDetailsScreen(
+                                                      report: report,
+                                                      isDark: isDark,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.location_on,
+                                                size: 36,
+                                                color: _statusColor(report.status, isDark),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                  
+                                  // Recenter Location Float Button
+                                  Positioned(
+                                    bottom: 16,
+                                    right: 16,
+                                    child: FloatingActionButton(
+                                      mini: true,
+                                      backgroundColor: primary,
+                                      child: Icon(
+                                        Icons.my_location,
+                                        color: isDark ? Colors.black : Colors.white,
+                                      ),
+                                      onPressed: () => _fetchUserLocation(forceRecenter: true),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(bg, primary, subText),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
     );
   }
 
@@ -158,93 +262,68 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
     );
   }
 
-  Widget _buildIssueCard(Map<String, dynamic> issue, bool isDark, Color cardBg, Color textColor, Color subText) {
-    final statusColor = _statusColor(issue['status'], isDark);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: subText.withValues(alpha: 0.4), width: 1.5),
+  Widget _buildIssueCard(Report report, bool isDark, Color cardBg, Color textColor, Color subText) {
+    final statusColor = _statusColor(report.status, isDark);
+    final timeStr = '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}';
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportDetailsScreen(
+              report: report,
+              isDark: isDark,
             ),
-            child: Icon(Icons.info_outline, size: 18, color: subText),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14)),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: subText.withValues(alpha: 0.4), width: 1.5),
+              ),
+              child: Icon(Icons.info_outline, size: 18, color: subText),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(report.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textColor)),
+                  const SizedBox(height: 2),
+                  Text('${report.latitude.toStringAsFixed(4)}° N, ${report.longitude.toStringAsFixed(4)}° W', style: TextStyle(fontSize: 12, color: subText)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(issue['title'], style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textColor)),
-                const SizedBox(height: 2),
-                Text(issue['address'], style: TextStyle(fontSize: 12, color: subText)),
+                Text(timeStr, style: TextStyle(fontSize: 11, color: subText)),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    report.status.toUpperCase(),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
+                  ),
+                ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(issue['time'], style: TextStyle(fontSize: 11, color: subText)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  issue['status'],
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(Color bg, Color primary, Color subText) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(top: BorderSide(color: subText.withValues(alpha: 0.15), width: 1)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.map_outlined, 'Map Feed', 0, primary, subText),
-              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1, primary, subText),
-              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2, primary, subText),
-              _buildNavItem(Icons.phone_outlined, 'Emergency', 3, primary, subText),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index, Color primary, Color subText) {
-    final isActive = index == 0;
-    final color = isActive ? primary : subText;
-    return GestureDetector(
-      onTap: () => _onTabTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 3),
-          Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
-        ],
-      ),
-    );
-  }
 }

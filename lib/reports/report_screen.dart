@@ -2,14 +2,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'map_feed_screen.dart';
 import 'my_reports_screen.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/account_settings_screen.dart';
+import '../reports/widgets/custom_bottom_navbar.dart';
 import '../core/theme/theme_notifier.dart';
+import '../domain/repositories/location_service.dart';
+import '../presentation/viewmodels/report_viewmodel.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -19,9 +20,11 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  // File? _image;
   XFile? _image;
   final ImagePicker _picker = ImagePicker();
+
+  double? _latitude;
+  double? _longitude;
 
   // Issue Category Dropdown
   String? _selectedCategory;
@@ -38,7 +41,27 @@ class _ReportScreenState extends State<ReportScreen> {
   ];
 
   final TextEditingController _descriptionController = TextEditingController();
-  late bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      final service = context.read<LocationService>();
+      final location = await service.getCurrentLocation();
+      if (location != null) {
+        setState(() {
+          _latitude = location.latitude;
+          _longitude = location.longitude;
+        });
+      }
+    } catch (e) {
+      // Graceful error handling
+    }
+  }
 
   void _onTabTapped(int index) {
     if (index == 1) return;
@@ -94,25 +117,17 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    final reportViewModel = context.read<ReportViewModel>();
+    final success = await reportViewModel.submitReport(
+      title: _selectedCategory!,
+      description: _descriptionController.text.trim(),
+      localImagePath: _image!.path,
+      latitude: _latitude,
+      longitude: _longitude,
+    );
 
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      // ==== Firebase Cloud Storage upload logic here ====
-      
-      await FirebaseFirestore.instance.collection('reports').add({
-        'userId': user?.uid ?? 'anonymous',
-        'category': _selectedCategory,
-        'description': _descriptionController.text.trim(),
-        'location': '49.7128° N, 74.0060° W', // Hardcoded for now
-        'status': 'SUBMITTED',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      if (mounted) {
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Report submitted successfully!')),
         );
@@ -123,18 +138,10 @@ class _ReportScreenState extends State<ReportScreen> {
         _descriptionController.clear();
         
         _onTabTapped(2); 
-      }
-    } catch (e) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit report: $e')),
+          SnackBar(content: Text(reportViewModel.errorMessage ?? 'Failed to submit report')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -351,7 +358,9 @@ class _ReportScreenState extends State<ReportScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '49.7128° N, 74.0060° W',
+                                _latitude != null && _longitude != null
+                                    ? '${_latitude!.toStringAsFixed(4)}° N, ${_longitude!.toStringAsFixed(4)}° W'
+                                    : 'Fetching location...',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: subText,
@@ -458,8 +467,8 @@ class _ReportScreenState extends State<ReportScreen> {
                           ),
                           elevation: 0,
                         ),
-                        onPressed: _isLoading ? null : _submitReport,
-                        child: _isLoading
+                        onPressed: context.watch<ReportViewModel>().isLoading ? null : _submitReport,
+                        child: context.watch<ReportViewModel>().isLoading
                               ? const SizedBox(
                                   height: 24,
                                   width: 24,
@@ -487,55 +496,7 @@ class _ReportScreenState extends State<ReportScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(isDark, primary, subText, bg),
-    );
-  }
-
-  Widget _buildBottomNav(bool isDark, Color primary, Color subText, Color bg) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(
-          top: BorderSide(color: subText.withValues(alpha: 0.15), width: 1),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.map_outlined, 'Map Feed', 0, primary, subText),
-              _buildNavItem(Icons.camera_alt_outlined, 'Report', 1, primary, subText),
-              _buildNavItem(Icons.assignment_outlined, 'My Reports', 2, primary, subText),
-              _buildNavItem(Icons.phone_outlined, 'Emergency', 3, primary, subText),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index, Color primary, Color subText) {
-    final isActive = index == 1;
-    final color = isActive ? primary : subText;
-    return GestureDetector(
-      onTap: () => _onTabTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal),
-          ),
-        ],
-      ),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 1),
     );
   }
 }

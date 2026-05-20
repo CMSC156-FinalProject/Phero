@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'signin_screen.dart';
 import '../reports/map_feed_screen.dart';
 import '../core/theme/theme_notifier.dart';
+import '../presentation/viewmodels/auth_viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,16 +16,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
-  bool _isLoading = false;
 
   Future<void> _login() async {
-    setState(() => _isLoading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter email and password')),
       );
-      if (mounted) {
+      return;
+    }
+
+    final authViewModel = context.read<AuthViewModel>();
+    final success = await authViewModel.signIn(email, password);
+
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logged in successfully!')),
         );
@@ -33,15 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => const MapFeedScreen()),
         );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Login failed')),
+          SnackBar(content: Text(authViewModel.errorMessage ?? 'Login failed')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -121,8 +123,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: _isLoading ? null : _login,
-                        child: _isLoading
+                        onPressed: context.watch<AuthViewModel>().isLoading ? null : _login,
+                        child: context.watch<AuthViewModel>().isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : Text(
                                 'log in',
