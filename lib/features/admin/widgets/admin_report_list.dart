@@ -137,7 +137,7 @@ class AdminReportList extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: report.mediaPath!,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
+                      placeholder: (_, _) => Container(
                         color: Colors.grey.withValues(alpha: 0.1),
                         child: const Center(
                           child: SizedBox(
@@ -147,7 +147,7 @@ class AdminReportList extends StatelessWidget {
                           ),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: Colors.grey.withValues(alpha: 0.3),
                         child: Icon(
                           Icons.broken_image_outlined,
