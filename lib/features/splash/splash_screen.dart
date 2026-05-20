@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/login_screen.dart';
+import '../../reports/map_feed_screen.dart';
+import '../../presentation/viewmodels/auth_viewmodel.dart';
 import '../../core/theme/theme_notifier.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -53,10 +55,16 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (!mounted) return;
+        
+        final authViewModel = context.read<AuthViewModel>();
+        final Widget nextScreen = authViewModel.currentUser != null 
+            ? const MapFeedScreen() 
+            : const LoginScreen();
+
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, _, _) => const LoginScreen(),
+            pageBuilder: (_, _, _) => nextScreen,
             transitionDuration: Duration.zero,
           ),
         );
