@@ -80,7 +80,7 @@ class _MapFeedScreenState extends State<MapFeedScreen> {
 
   Color _statusColor(String status, bool isDark) {
   switch (status.toUpperCase()) {
-    case 'IN PROGRESS':
+    case 'IN_PROGRESS':
       return const Color(0xFF4169E1); // Blue
 
     case 'RESOLVED':
